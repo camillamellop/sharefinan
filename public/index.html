@@ -17,7 +17,7 @@
     -->
     
     <!-- Supabase Client -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- Inicialização do Supabase -->
     <script>
@@ -28,14 +28,15 @@
         console.log('%cVerificando ambiente...', 'color: #666;');
         
         // Configuração do Supabase
-    
+        // SUAS CREDENCIAIS JÁ ESTÃO AQUI! ✅
         const SUPABASE_URL = window.SUPABASE_URL || 'https://nxtxlueqzujqnsuqxmry.supabase.co';
         const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54dHhsdWVxenVqcW5zdXF4bXJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4Nzg4NjcsImV4cCI6MjA2NjQ1NDg2N30.Mq3vDWbk9bFhrOaK5MTOHZNNoh0w-878dH5ybOAp7m4';
         
         // Inicializar Supabase
         let supabase;
         try {
-            supabase = supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            const { createClient } = window.supabase;
+            supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             console.log('✅ Supabase inicializado com sucesso!');
         } catch (error) {
             console.error('❌ Erro ao inicializar Supabase:', error);
