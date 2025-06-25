@@ -1,217 +1,48 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Share Brasil - Dashboard Gestor</title>
-<!-- 
-    SISTEMA DE GESTÃO SHARE BRASIL
-    ================================
-    Firebase Project: financeiro-share
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Brasil - Dashboard Gestor</title>
+    
+    <!-- 
+    SISTEMA DE GESTÃO SHARE BRASIL - VERSÃO SUPABASE
+    ================================================
+    Configurado para usar Supabase como backend
     
     IMPORTANTE: Para o sistema funcionar corretamente:
-    1. Configure as regras do Firestore para permitir leitura/escrita
-    2. Verifique o console do navegador (F12) para logs de diagnóstico
-    3. Se houver problemas, execute manualInit() no console
+    1. Configure as variáveis de ambiente no Vercel
+    2. Crie as tabelas no Supabase conforme o schema
+    3. Configure as políticas RLS no Supabase
     -->
-<!-- Teste de módulos ES6 -->
-<script>
+    
+    <!-- Supabase Client -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <!-- Inicialização do Supabase -->
+    <script>
         // Limpar console para melhor visualização
         console.clear();
         
-        console.log('%c=== SHARE BRASIL - SISTEMA DE GESTÃO ===', 'color: #4A90E2; font-size: 16px; font-weight: bold;');
+        console.log('%c=== SHARE BRASIL - SISTEMA DE GESTÃO (SUPABASE) ===', 'color: #4A90E2; font-size: 16px; font-weight: bold;');
         console.log('%cVerificando ambiente...', 'color: #666;');
-        console.log('Navegador:', navigator.userAgent);
-        console.log('Testando suporte a módulos ES6...');
         
-        // Verificar se o navegador suporta módulos ES6
-        const supportsModules = 'noModule' in HTMLScriptElement.prototype;
-        console.log('Suporte a módulos ES6:', supportsModules ? '✅ SIM' : '❌ NÃO');
+        // Configuração do Supabase
+    
+        const SUPABASE_URL = window.SUPABASE_URL || 'https://nxtxlueqzujqnsuqxmry.supabase.co';
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54dHhsdWVxenVqcW5zdXF4bXJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4Nzg4NjcsImV4cCI6MjA2NjQ1NDg2N30.Mq3vDWbk9bFhrOaK5MTOHZNNoh0w-878dH5ybOAp7m4';
         
-        if (!supportsModules) {
-            alert('Seu navegador não suporta módulos ES6. Por favor, atualize para uma versão mais recente.');
-        }
-        
-        // Teste básico
-        const testScript = document.createElement('script');
-        testScript.type = 'module';
-        testScript.textContent = `console.log('✅ Módulos ES6 suportados!');`;
-        document.head.appendChild(testScript);
-        
-        // Teste de import
-        const importTest = document.createElement('script');
-        importTest.type = 'module';
-        importTest.textContent = `
-            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-            console.log('✅ Import do Firebase funcionou!', initializeApp);
-        `;
-        document.head.appendChild(importTest);
-    </script>
-<!-- Firebase SDKs -->
-<script type="module">// BYPASS DE EMERGÊNCIA - Remover em produção!
-if (!localStorage.getItem('sharebrasilUser')) {
-    console.log('Usuário não identificado - usando bypass de emergência');
-    localStorage.setItem('sharebrasilUser', 'Administrador');
-    localStorage.setItem('sharebrasilUserId', 'admin');
-    localStorage.setItem('sharebrasilUserRole', 'admin');
-    localStorage.setItem('sharebrasilAuthenticated', 'true');
-    localStorage.setItem('sharebrasilAuthMode', 'bypass');
-}
-        console.log('1. Iniciando carregamento do Firebase...');
-        
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, where, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        
-        console.log('2. Imports do Firebase realizados');
-        
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCtRuVxTXn3Pb1FFSrJuwfe1HrgmvZwc9U",
-            authDomain: "financeiro-share.firebaseapp.com",
-            databaseURL: "https://financeiro-share-default-rtdb.firebaseio.com",
-            projectId: "financeiro-share",
-            storageBucket: "financeiro-share.firebasestorage.app",
-            messagingSenderId: "317130008998",
-            appId: "1:317130008998:web:35d31a426a7ff3b2184767",
-            measurementId: "G-VZLH0YHBVS"
-        };
-        
-        console.log('3. Configuração do Firebase definida');
-        
-        // Initialize Firebase
+        // Inicializar Supabase
+        let supabase;
         try {
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-            
-            console.log('4. Firebase inicializado com sucesso:', app);
-            console.log('5. Firestore conectado:', db);
-            console.log('6. Auth configurado:', auth);
-            
-            // Verificar autenticação
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-            
-                    // Verificar autenticação - VERSÃO CORRIGIDA
-const checkAuth = () => {
-    // Primeiro verificar autenticação local
-    const isAuthenticated = localStorage.getItem('sharebrasilAuthenticated');
-    const savedUser = localStorage.getItem('sharebrasilUser');
-    
-    if (isAuthenticated === 'true' && savedUser) {
-        console.log('✅ Usuário autenticado localmente:', savedUser);
-        
-        // Atualizar interface
-        const userNameElements = document.querySelectorAll('.user-name');
-        userNameElements.forEach(el => {
-            el.textContent = savedUser;
-        });
-        
-        // IMPORTANTE: Esconder loading
-        const loadingOverlay = document.getElementById('loading-overlay');
-        if (loadingOverlay) {
-            loadingOverlay.style.display = 'none';
-        }
-        
-        console.log('Sistema pronto para uso!');
-        return true;
-    }
-    return false;
-};
-
-// Verificar imediatamente
-if (!checkAuth()) {
-    // Se não tem auth local, tentar Firebase (com timeout)
-    let authTimeout = setTimeout(() => {
-        console.log('Timeout na autenticação - redirecionando...');
-        window.location.href = 'index.html';
-    }, 5000); // 5 segundos de timeout
-    
-    try {
-        onAuthStateChanged(auth, (user) => {
-            clearTimeout(authTimeout); // Limpar timeout
-            
-            if (user) {
-                console.log('✅ Usuário autenticado via Firebase');
-                // Esconder loading
-                const loadingOverlay = document.getElementById('loading-overlay');
-                if (loadingOverlay) {
-                    loadingOverlay.style.display = 'none';
-                }
-            } else {
-                console.log('❌ Não autenticado - redirecionando...');
-                window.location.href = 'index.html';
-            }
-        });
-    } catch (error) {
-        clearTimeout(authTimeout);
-        console.error('Erro no Firebase Auth:', error);
-        window.location.href = 'index.html';
-    }
-}
-                } else {
-                    console.log('❌ Usuário não autenticado - redirecionando para login');
-                    // Pequeno delay para evitar redirecionamento durante carregamento inicial
-                    setTimeout(() => {
-                        window.location.href = 'index.html'; // Mudado de login.html para index.html
-                    }, 1000);
-                }
-            });
-            
-            // Make functions available globally
-            window.db = db;
-            window.auth = auth;
-            window.firestore = {
-                collection,
-                addDoc,
-                getDocs,
-                updateDoc,
-                deleteDoc,
-                doc,
-                onSnapshot,
-                query,
-                orderBy,
-                where,
-                getDoc
-            };
-            
-            // Função global de logout
-            window.logout = async () => {
-                if (confirm('Deseja realmente sair do sistema?')) {
-                    try {
-                        await signOut(auth);
-                        localStorage.removeItem('sharebrasilUser');
-                        localStorage.removeItem('sharebrasilUserId');
-                        window.location.href = 'index.html'; // Mudado de login.html para index.html
-                    } catch (error) {
-                        console.error('Erro ao fazer logout:', error);
-                        alert('Erro ao sair. Tente novamente.');
-                    }
-                }
-            };
-            
-            console.log('7. Funções do Firebase disponibilizadas globalmente');
-            
-            // Disparar evento customizado quando Firebase estiver pronto
-            window.dispatchEvent(new Event('firebaseReady'));
-            console.log('8. Evento firebaseReady disparado');// Forçar remoção do loading após 3 segundos
-setTimeout(() => {
-    const loadingOverlay = document.getElementById('loading-overlay');
-    if (loadingOverlay && loadingOverlay.style.display !== 'none') {
-        console.log('Forçando remoção do loading...');
-        loadingOverlay.style.display = 'none';
-    }
-}, 3000);
-            
+            supabase = supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✅ Supabase inicializado com sucesso!');
         } catch (error) {
-            console.error('ERRO ao inicializar Firebase:', error);
-            alert('Erro ao inicializar o sistema: ' + error.message);
+            console.error('❌ Erro ao inicializar Supabase:', error);
         }
     </script>
-<style>
+    
+    <style>
         * {
             margin: 0;
             padding: 0;
@@ -639,46 +470,32 @@ setTimeout(() => {
             background: white;
         }
 
-        /* Calendar */
-        .calendar-container {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 0.5rem;
-        }
-
-        .calendar-day {
-            aspect-ratio: 1;
+        /* Loading state */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            position: relative;
+            z-index: 9999;
         }
 
-        .calendar-day:hover {
-            background: #F3F4F6;
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
-        .calendar-day.has-expense {
-            background: #FEE2E2;
-            color: #991B1B;
-            font-weight: 600;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         /* Notes */
@@ -741,32 +558,67 @@ setTimeout(() => {
             color: #6B7280;
         }
 
-        /* Loading state */
-        .loading-overlay {
+        /* Login Form */
+        .login-container {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255, 255, 255, 0.9);
+            background: #F5F6FA;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
+            z-index: 10000;
         }
 
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .login-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 400px;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-title {
+            font-size: 2rem;
+            color: #1E3A5F;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-subtitle {
+            color: #6B7280;
+        }
+
+        .card-icon.yellow {
+            background: #F59E0B;
+            color: white;
+        }
+
+        /* Print Styles */
+        @media print {
+            .sidebar, .header-actions, .btn, .search-box {
+                display: none !important;
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+            }
+            
+            .page-header {
+                margin-bottom: 1rem !important;
+            }
+            
+            .dashboard-card {
+                page-break-inside: avoid;
+            }
         }
 
         /* Responsive */
@@ -797,1488 +649,1914 @@ setTimeout(() => {
     </style>
 </head>
 <body>
-<!-- Loading Overlay -->
-<div class="loading-overlay" id="loading-overlay">
-<div>
-<div class="loading-spinner"></div>
-<p style="margin-top: 1rem; color: #666;">Carregando sistema...</p>
-<p style="margin-top: 0.5rem; color: #999; font-size: 0.9rem;">Conectando ao Firebase...</p>
-</div>
-</div>
-<!-- Sidebar -->
-<aside class="sidebar">
-<div class="sidebar-header">
-<h2>Share Brasil</h2>
-</div>
-<nav class="sidebar-menu">
-<a class="menu-item active" href="#" onclick="showSection('dashboard')">
-<span class="menu-icon">📊</span>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div>
+            <div class="loading-spinner"></div>
+            <p style="margin-top: 1rem; color: #666;">Carregando sistema...</p>
+            <p style="margin-top: 0.5rem; color: #999; font-size: 0.9rem;">Conectando ao Supabase...</p>
+        </div>
+    </div>
+
+    <!-- Login Container -->
+    <div class="login-container" id="login-container" style="display: none;">
+        <div class="login-card">
+            <div class="login-header">
+                <h1 class="login-title">Share Brasil</h1>
+                <p class="login-subtitle">Sistema de Gestão</p>
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="login-email" required placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Senha</label>
+                    <input type="password" class="form-input" id="login-password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Share Brasil</h2>
+        </div>
+        <nav class="sidebar-menu">
+            <a href="#" class="menu-item active" onclick="showSection('dashboard')">
+                <span class="menu-icon">📊</span>
                 Dashboard
             </a>
-<a class="menu-item" href="#" onclick="showSection('financeiro')">
-<span class="menu-icon">💰</span>
+            <a href="#" class="menu-item" onclick="showSection('financeiro')">
+                <span class="menu-icon">💰</span>
                 Financeiro
             </a>
-<a class="menu-item" href="#" onclick="showSection('contatos')">
-<span class="menu-icon">👥</span>
+            <a href="#" class="menu-item" onclick="showSection('contatos')">
+                <span class="menu-icon">👥</span>
                 Contatos
             </a>
-<a class="menu-item" href="#" onclick="showSection('funcionarios')">
-<span class="menu-icon">👨‍💼</span>
+            <a href="#" class="menu-item" onclick="showSection('funcionarios')">
+                <span class="menu-icon">👨‍💼</span>
                 Funcionários
             </a>
-<a class="menu-item" href="#" onclick="showSection('inadimplencia')">
-<span class="menu-icon">⚠️</span>
+            <a href="#" class="menu-item" onclick="showSection('inadimplencia')">
+                <span class="menu-icon">⚠️</span>
                 Inadimplência
             </a>
-<a class="menu-item" href="#" onclick="showSection('notafiscal')">
-<span class="menu-icon">📄</span>
+            <a href="#" class="menu-item" onclick="showSection('notafiscal')">
+                <span class="menu-icon">📄</span>
                 Nota Fiscal
             </a>
-<a class="menu-item" href="#" onclick="showSection('bloconotas')">
-<span class="menu-icon">📝</span>
+            <a href="#" class="menu-item" onclick="showSection('bloconotas')">
+                <span class="menu-icon">📝</span>
                 Bloco de Notas
             </a>
-<a class="menu-item" href="#" onclick="showSection('relatorios')">
-<span class="menu-icon">📈</span>
+            <a href="#" class="menu-item" onclick="showSection('relatorios')">
+                <span class="menu-icon">📈</span>
                 Relatórios
             </a>
-<a class="menu-item" href="#" onclick="showSection('backup')">
-<span class="menu-icon">💾</span>
+            <a href="#" class="menu-item" onclick="showSection('backup')">
+                <span class="menu-icon">💾</span>
                 Backup
             </a>
-<a class="menu-item" href="#" onclick="showSection('configuracoes')">
-<span class="menu-icon">⚙️</span>
+            <a href="#" class="menu-item" onclick="showSection('configuracoes')">
+                <span class="menu-icon">⚙️</span>
                 Configurações
             </a>
-<a class="menu-item" href="#" onclick="testFirebase()">
-<span class="menu-icon">🔧</span>
-                Debug Firebase
+            <a href="#" class="menu-item" onclick="testSupabase()">
+                <span class="menu-icon">🔧</span>
+                Debug Supabase
             </a>
-</nav>
-<!-- User Info Section -->
-<div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-<div style="display: flex; align-items: center; justify-content: space-between; color: white;">
-<div style="display: flex; align-items: center; gap: 0.5rem;">
-<div style="width: 32px; height: 32px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">
+        </nav>
+        
+        <!-- User Info Section -->
+        <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <div style="display: flex; align-items: center; justify-content: space-between; color: white;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="width: 32px; height: 32px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">
                         👤
                     </div>
-<span class="user-name" style="font-size: 0.9rem;">Usuário</span>
-</div>
-<button onclick="logout()" style="background: none; border: none; color: white; cursor: pointer; padding: 0.5rem;" title="Sair">
+                    <span class="user-name" style="font-size: 0.9rem;">Usuário</span>
+                </div>
+                <button onclick="logout()" style="background: none; border: none; color: white; cursor: pointer; padding: 0.5rem;" title="Sair">
                     🚪
                 </button>
-</div>
-</div>
-</aside>
-<!-- Main Content -->
-<main class="main-content">
-<!-- Dashboard Section -->
-<section class="content-section" id="dashboard-section">
-<!-- Header -->
-<div class="page-header">
-<div>
-<h1 class="page-title">Dashboard - Resumo Executivo</h1>
-<p class="page-subtitle">Visão geral rápida das finanças do mês atual</p>
-</div>
-<div class="header-actions">
-<select class="filter-select">
-<option>Janeiro</option>
-<option>Fevereiro</option>
-<option>Março</option>
-</select>
-<select class="filter-select">
-<option>2025</option>
-<option>2024</option>
-</select>
-<button class="btn btn-primary" onclick="openModal('lancamento')">
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboard-section" class="content-section">
+            <!-- Header -->
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Dashboard - Resumo Executivo</h1>
+                    <p class="page-subtitle">Visão geral rápida das finanças do mês atual</p>
+                </div>
+                <div class="header-actions">
+                    <select class="filter-select">
+                        <option>Janeiro</option>
+                        <option>Fevereiro</option>
+                        <option>Março</option>
+                    </select>
+                    <select class="filter-select">
+                        <option>2025</option>
+                        <option>2024</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="openModal('lancamento')">
                         ➕ Novo Lançamento
                     </button>
-</div>
-</div>
-<!-- Dashboard Cards -->
-<div class="dashboard-grid">
-<div class="dashboard-card">
-<div class="card-icon green">📈</div>
-<div class="card-change positive">+12.5%</div>
-<div class="card-label">Total Entradas</div>
-<div class="card-value" id="total-entradas">R$ 0,00</div>
-<div style="font-size: 0.85rem; color: #6B7280; margin-top: 0.5rem;">
+                </div>
+            </div>
+
+            <!-- Dashboard Cards -->
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-icon green">📈</div>
+                    <div class="card-change positive">+12.5%</div>
+                    <div class="card-label">Total Entradas</div>
+                    <div class="card-value" id="total-entradas">R$ 0,00</div>
+                    <div style="font-size: 0.85rem; color: #6B7280; margin-top: 0.5rem;">
                         Baseado em contas recebidas
                     </div>
-</div>
-<div class="dashboard-card">
-<div class="card-icon red">📉</div>
-<div class="card-change negative">+8.3%</div>
-<div class="card-label">Total Saídas</div>
-<div class="card-value" id="total-saidas">R$ 0,00</div>
-<div style="font-size: 0.85rem; color: #6B7280; margin-top: 0.5rem;">
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon red">📉</div>
+                    <div class="card-change negative">+8.3%</div>
+                    <div class="card-label">Total Saídas</div>
+                    <div class="card-value" id="total-saidas">R$ 0,00</div>
+                    <div style="font-size: 0.85rem; color: #6B7280; margin-top: 0.5rem;">
                         Baseado em contas pagas
                     </div>
-</div>
-<div class="dashboard-card">
-<div class="card-icon blue">💰</div>
-<div class="card-change positive">0%</div>
-<div class="card-label">Resultado do Mês</div>
-<div class="card-value" id="resultado-mes">R$ 0,00</div>
-<div style="font-size: 0.85rem; color: #6B7280; margin-top: 0.5rem;">
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon blue">💰</div>
+                    <div class="card-change positive">0%</div>
+                    <div class="card-label">Resultado do Mês</div>
+                    <div class="card-value" id="resultado-mes">R$ 0,00</div>
+                    <div style="font-size: 0.85rem; color: #6B7280; margin-top: 0.5rem;">
                         Entradas - Saídas
                     </div>
-</div>
-<div class="dashboard-card">
-<div class="card-icon purple">💳</div>
-<div class="card-label">Pago na Última Semana</div>
-<div class="card-value" id="pago-semana" style="color: #EF4444;">-R$ 0,00</div>
-<div style="font-size: 0.85rem; color: #6B7280; margin-top: 0.5rem;">
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon purple">💳</div>
+                    <div class="card-label">Pago na Última Semana</div>
+                    <div class="card-value" style="color: #EF4444;" id="pago-semana">-R$ 0,00</div>
+                    <div style="font-size: 0.85rem; color: #6B7280; margin-top: 0.5rem;">
                         Pagamentos últimos 7 dias
                     </div>
-</div>
-</div>
-<!-- Charts -->
-<div class="charts-container">
-<div class="chart-card">
-<div class="chart-header">
-<h3 class="chart-title">Análise por Categoria</h3>
-<div class="chart-filters">
-<select class="filter-select">
-<option>Últimos 30 dias</option>
-<option>Últimos 60 dias</option>
-<option>Últimos 90 dias</option>
-</select>
-</div>
-</div>
-<div class="chart-placeholder">
-<canvas id="categoriaChart"></canvas>
-</div>
-</div>
-<div class="chart-card">
-<div class="chart-header">
-<h3 class="chart-title">DRE - Demonstração de Resultado</h3>
-</div>
-<div class="chart-placeholder">
-<canvas id="dreChart"></canvas>
-</div>
-</div>
-</div>
-<!-- Recent Transactions -->
-<div class="table-card">
-<div class="table-header">
-<h3 class="chart-title">Últimas Transações</h3>
-<div class="search-box">
-<span>🔍</span>
-<input class="search-input" id="search-transacoes" placeholder="Pesquisar..." type="text"/>
-</div>
-</div>
-<table>
-<thead>
-<tr>
-<th>Data</th>
-<th>Descrição</th>
-<th>Categoria</th>
-<th>Tipo</th>
-<th>Valor</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody id="transacoes-tbody">
-<tr>
-<td class="loading" colspan="6">Carregando transações...</td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<!-- Funcionários Section -->
-<section class="content-section" id="funcionarios-section" style="display: none;">
-<div class="page-header">
-<div>
-<h1 class="page-title">Gestão de Funcionários</h1>
-<p class="page-subtitle">Cadastro e controle de funcionários</p>
-</div>
-<div class="header-actions">
-<button class="btn btn-primary" onclick="openModal('funcionario')">
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-container">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Análise por Categoria</h3>
+                        <div class="chart-filters">
+                            <select class="filter-select">
+                                <option>Últimos 30 dias</option>
+                                <option>Últimos 60 dias</option>
+                                <option>Últimos 90 dias</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-placeholder">
+                        <canvas id="categoriaChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">DRE - Demonstração de Resultado</h3>
+                    </div>
+                    <div class="chart-placeholder">
+                        <canvas id="dreChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="table-card">
+                <div class="table-header">
+                    <h3 class="chart-title">Últimas Transações</h3>
+                    <div class="search-box">
+                        <span>🔍</span>
+                        <input type="text" class="search-input" placeholder="Pesquisar..." id="search-transacoes">
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>Categoria</th>
+                            <th>Tipo</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transacoes-tbody">
+                        <tr>
+                            <td colspan="6" class="loading">Carregando transações...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Funcionários Section -->
+        <section id="funcionarios-section" class="content-section" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Gestão de Funcionários</h1>
+                    <p class="page-subtitle">Cadastro e controle de funcionários</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openModal('funcionario')">
                         ➕ Novo Funcionário
                     </button>
-</div>
-</div>
-<!-- Stats Cards -->
-<div class="dashboard-grid">
-<div class="dashboard-card">
-<div class="card-icon green">👥</div>
-<div class="card-label">Total de Funcionários</div>
-<div class="card-value" id="total-funcionarios">0</div>
-</div>
-<div class="dashboard-card">
-<div class="card-icon blue">✅</div>
-<div class="card-label">Ativos</div>
-<div class="card-value" id="funcionarios-ativos">0</div>
-</div>
-<div class="dashboard-card">
-<div class="card-icon red">❌</div>
-<div class="card-label">Inativos</div>
-<div class="card-value" id="funcionarios-inativos">0</div>
-</div>
-<div class="dashboard-card">
-<div class="card-icon purple">💰</div>
-<div class="card-label">Folha de Pagamento</div>
-<div class="card-value" id="folha-pagamento">R$ 0,00</div>
-</div>
-</div>
-<!-- Funcionários Table -->
-<div class="table-card">
-<div class="table-header">
-<h3 class="chart-title">Lista de Funcionários</h3>
-<div class="search-box">
-<span>🔍</span>
-<input class="search-input" id="search-funcionarios" placeholder="Pesquisar funcionários..." type="text"/>
-</div>
-</div>
-<table>
-<thead>
-<tr>
-<th>Nome</th>
-<th>CPF</th>
-<th>Cargo</th>
-<th>Departamento</th>
-<th>Admissão</th>
-<th>Salário</th>
-<th>Status</th>
-<th>Ações</th>
-</tr>
-</thead>
-<tbody id="funcionarios-tbody">
-<tr>
-<td class="loading" colspan="8">Carregando funcionários...</td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<!-- Financeiro Section -->
-<section class="content-section" id="financeiro-section" style="display: none;">
-<div class="page-header">
-<div>
-<h1 class="page-title">Gestão Financeira</h1>
-<p class="page-subtitle">Controle de entradas e saídas</p>
-</div>
-<div class="header-actions">
-<button class="btn btn-primary" onclick="openModal('receita')">
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-icon green">👥</div>
+                    <div class="card-label">Total de Funcionários</div>
+                    <div class="card-value" id="total-funcionarios">0</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-icon blue">✅</div>
+                    <div class="card-label">Ativos</div>
+                    <div class="card-value" id="funcionarios-ativos">0</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-icon red">❌</div>
+                    <div class="card-label">Inativos</div>
+                    <div class="card-value" id="funcionarios-inativos">0</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-icon purple">💰</div>
+                    <div class="card-label">Folha de Pagamento</div>
+                    <div class="card-value" id="folha-pagamento">R$ 0,00</div>
+                </div>
+            </div>
+
+            <!-- Funcionários Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <h3 class="chart-title">Lista de Funcionários</h3>
+                    <div class="search-box">
+                        <span>🔍</span>
+                        <input type="text" class="search-input" placeholder="Pesquisar funcionários..." id="search-funcionarios">
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>CPF</th>
+                            <th>Cargo</th>
+                            <th>Departamento</th>
+                            <th>Admissão</th>
+                            <th>Salário</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="funcionarios-tbody">
+                        <tr>
+                            <td colspan="8" class="loading">Carregando funcionários...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        // Inadimplência Section
+        <section id="inadimplencia-section" class="content-section" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Controle de Inadimplência</h1>
+                    <p class="page-subtitle">Acompanhe pagamentos pendentes e em atraso</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="gerarRelatorioInadimplencia()">
+                        📊 Gerar Relatório
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-icon red">⚠️</div>
+                    <div class="card-label">Total em Atraso</div>
+                    <div class="card-value" id="total-atraso">R$ 0,00</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-icon yellow">⏳</div>
+                    <div class="card-label">Vence Hoje</div>
+                    <div class="card-value" id="vence-hoje">R$ 0,00</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-icon blue">📅</div>
+                    <div class="card-label">Vence esta Semana</div>
+                    <div class="card-value" id="vence-semana">R$ 0,00</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-icon purple">📈</div>
+                    <div class="card-label">Taxa de Inadimplência</div>
+                    <div class="card-value" id="taxa-inadimplencia">0%</div>
+                </div>
+            </div>
+
+            <!-- Inadimplência Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <h3 class="chart-title">Pagamentos Pendentes</h3>
+                    <div class="search-box">
+                        <span>🔍</span>
+                        <input type="text" class="search-input" placeholder="Pesquisar..." id="search-inadimplencia">
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Vencimento</th>
+                            <th>Cliente</th>
+                            <th>Descrição</th>
+                            <th>Valor</th>
+                            <th>Dias em Atraso</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inadimplencia-tbody">
+                        <tr>
+                            <td colspan="6" class="loading">Carregando dados...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Relatórios Section -->
+        <section id="relatorios-section" class="content-section" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Relatórios</h1>
+                    <p class="page-subtitle">Gere relatórios e exporte dados do sistema</p>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card" style="cursor: pointer;" onclick="exportarDados('funcionarios')">
+                    <div class="card-icon green">📊</div>
+                    <div class="card-label">Exportar Funcionários</div>
+                    <div class="card-value">CSV</div>
+                </div>
+                <div class="dashboard-card" style="cursor: pointer;" onclick="exportarDados('transacoes')">
+                    <div class="card-icon blue">💰</div>
+                    <div class="card-label">Exportar Transações</div>
+                    <div class="card-value">CSV</div>
+                </div>
+                <div class="dashboard-card" style="cursor: pointer;" onclick="exportarDados('contatos')">
+                    <div class="card-icon purple">👥</div>
+                    <div class="card-label">Exportar Contatos</div>
+                    <div class="card-value">CSV</div>
+                </div>
+                <div class="dashboard-card" style="cursor: pointer;" onclick="gerarDRE()">
+                    <div class="card-icon red">📈</div>
+                    <div class="card-label">Gerar DRE</div>
+                    <div class="card-value">PDF</div>
+                </div>
+            </div>
+
+            <!-- Relatório Preview -->
+            <div class="table-card" style="margin-top: 2rem;">
+                <div class="table-header">
+                    <h3 class="chart-title">Prévia do Relatório</h3>
+                    <button class="btn btn-primary" onclick="imprimirRelatorio()">
+                        🖨️ Imprimir
+                    </button>
+                </div>
+                <div id="relatorio-preview" style="padding: 2rem;">
+                    <p style="color: #6B7280; text-align: center;">Selecione um relatório para visualizar</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Backup Section -->
+        <section id="backup-section" class="content-section" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Backup e Restauração</h1>
+                    <p class="page-subtitle">Faça backup dos seus dados e restaure quando necessário</p>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-icon green">💾</div>
+                    <div class="card-label">Último Backup</div>
+                    <div class="card-value" id="ultimo-backup">Nunca</div>
+                    <button class="btn btn-primary" style="margin-top: 1rem; width: 100%;" onclick="fazerBackup()">
+                        Fazer Backup Agora
+                    </button>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-icon blue">📤</div>
+                    <div class="card-label">Exportar Dados</div>
+                    <div class="card-value">JSON</div>
+                    <button class="btn" style="margin-top: 1rem; width: 100%;" onclick="exportarBackup()">
+                        Baixar Backup
+                    </button>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-icon purple">📥</div>
+                    <div class="card-label">Restaurar Dados</div>
+                    <div class="card-value">Upload</div>
+                    <input type="file" id="restore-file" accept=".json" style="display: none;" onchange="restaurarBackup(this)">
+                    <button class="btn" style="margin-top: 1rem; width: 100%;" onclick="document.getElementById('restore-file').click()">
+                        Selecionar Arquivo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Backup History -->
+            <div class="table-card" style="margin-top: 2rem;">
+                <div class="table-header">
+                    <h3 class="chart-title">Histórico de Backups</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Hora</th>
+                            <th>Tamanho</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="backup-history">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #6B7280;">
+                                Backups são salvos localmente no seu navegador
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Configurações Section -->
+        <section id="configuracoes-section" class="content-section" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Configurações</h1>
+                    <p class="page-subtitle">Personalize o sistema de acordo com suas necessidades</p>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <h3 style="margin-bottom: 1rem;">Informações da Empresa</h3>
+                    <div class="form-group">
+                        <label class="form-label">Nome da Empresa</label>
+                        <input type="text" class="form-input" id="config-empresa" value="Share Brasil">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">CNPJ</label>
+                        <input type="text" class="form-input" id="config-cnpj" placeholder="00.000.000/0000-00">
+                    </div>
+                    <button class="btn btn-primary" onclick="salvarConfiguracoes()">Salvar</button>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3 style="margin-bottom: 1rem;">Categorias</h3>
+                    <div class="form-group">
+                        <label class="form-label">Categorias de Despesas</label>
+                        <textarea class="form-input" rows="5" id="config-categorias">Despesas Share
+Ressarcim. Pago
+Contratos
+Outros</textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="salvarCategorias()">Salvar Categorias</button>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3 style="margin-bottom: 1rem;">Segurança</h3>
+                    <div class="form-group">
+                        <label class="form-label">Email Atual</label>
+                        <input type="email" class="form-input" id="config-email" disabled>
+                    </div>
+                    <button class="btn" onclick="alterarSenha()">Alterar Senha</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Financeiro Section -->
+        <section id="financeiro-section" class="content-section" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Gestão Financeira</h1>
+                    <p class="page-subtitle">Controle de entradas e saídas</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openModal('receita')">
                         ➕ Nova Receita
                     </button>
-<button class="btn btn-primary" onclick="openModal('despesa')">
+                    <button class="btn btn-primary" onclick="openModal('despesa')">
                         ➖ Nova Despesa
                     </button>
-</div>
-</div>
-<!-- Calendar View -->
-<div class="calendar-container">
-<div class="calendar-header">
-<h3 class="chart-title">Calendário de Despesas - Janeiro 2025</h3>
-<div class="chart-filters">
-<button class="btn">⬅️</button>
-<button class="btn">➡️</button>
-</div>
-</div>
-<div class="calendar-grid">
-<!-- Week days -->
-<div style="text-align: center; font-weight: 600; color: #6B7280;">Dom</div>
-<div style="text-align: center; font-weight: 600; color: #6B7280;">Seg</div>
-<div style="text-align: center; font-weight: 600; color: #6B7280;">Ter</div>
-<div style="text-align: center; font-weight: 600; color: #6B7280;">Qua</div>
-<div style="text-align: center; font-weight: 600; color: #6B7280;">Qui</div>
-<div style="text-align: center; font-weight: 600; color: #6B7280;">Sex</div>
-<div style="text-align: center; font-weight: 600; color: #6B7280;">Sáb</div>
-<!-- Calendar days will be generated here -->
-</div>
-</div>
-</section>
-<!-- Contatos Section -->
-<section class="content-section" id="contatos-section" style="display: none;">
-<div class="page-header">
-<div>
-<h1 class="page-title">Contatos</h1>
-<p class="page-subtitle">Gerencie clientes, fornecedores e funcionários</p>
-</div>
-<div class="header-actions">
-<button class="btn btn-primary" onclick="openModal('contato')">
+                </div>
+            </div>
+
+            <!-- Calendar View -->
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <h3 class="chart-title">Calendário de Despesas - Janeiro 2025</h3>
+                    <div class="chart-filters">
+                        <button class="btn">⬅️</button>
+                        <button class="btn">➡️</button>
+                    </div>
+                </div>
+                <div class="calendar-grid">
+                    <!-- Calendar will be generated here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Contatos Section -->
+        <section id="contatos-section" class="content-section" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Contatos</h1>
+                    <p class="page-subtitle">Gerencie clientes, fornecedores e funcionários</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openModal('contato')">
                         ➕ Novo Contato
                     </button>
-<button class="btn" onclick="popularClientes()" title="Popular clientes iniciais">
+                    <button class="btn" onclick="popularClientes()" title="Popular clientes iniciais">
                         📥 Importar Clientes
                     </button>
-</div>
-</div>
-<!-- Contact Filters -->
-<div class="dashboard-grid" style="margin-bottom: 2rem;">
-<button class="dashboard-card" style="cursor: pointer;">
-<div class="card-icon blue">👥</div>
-<div class="card-label">Todos</div>
-<div class="card-value" id="total-contatos">0</div>
-</button>
-<button class="dashboard-card" style="cursor: pointer;">
-<div class="card-icon green">👤</div>
-<div class="card-label">Clientes</div>
-<div class="card-value" id="total-clientes">0</div>
-</button>
-<button class="dashboard-card" style="cursor: pointer;">
-<div class="card-icon purple">🏢</div>
-<div class="card-label">Fornecedores</div>
-<div class="card-value" id="total-fornecedores">0</div>
-</button>
-</div>
-<!-- Contacts Table -->
-<div class="table-card">
-<div class="table-header">
-<h3 class="chart-title">Lista de Contatos</h3>
-<div class="search-box">
-<span>🔍</span>
-<input class="search-input" placeholder="Pesquisar contatos..." type="text"/>
-</div>
-</div>
-<table>
-<thead>
-<tr>
-<th>Nome</th>
-<th>Tipo</th>
-<th>CNPJ/CPF</th>
-<th>Telefone</th>
-<th>Email</th>
-<th>Ações</th>
-</tr>
-</thead>
-<tbody id="contatos-tbody">
-<tr>
-<td class="loading" colspan="6">Carregando contatos...</td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<!-- Nota Fiscal Section -->
-<section class="content-section" id="notafiscal-section" style="display: none;">
-<div class="page-header">
-<div>
-<h1 class="page-title">Notas Fiscais</h1>
-<p class="page-subtitle">Gerencie e organize suas notas fiscais</p>
-</div>
-<div class="header-actions">
-<button class="btn btn-primary" onclick="openModal('notafiscal')">
-                        📎 Anexar Nota Fiscal
-                    </button>
-</div>
-</div>
-<!-- Monthly Folders -->
-<div class="dashboard-grid">
-<div class="dashboard-card" style="cursor: pointer;">
-<div class="card-icon blue">📁</div>
-<div class="card-label">Janeiro 2025</div>
-<div class="card-value">12</div>
-<div style="font-size: 0.85rem; color: #6B7280;">notas fiscais</div>
-</div>
-<div class="dashboard-card" style="cursor: pointer;">
-<div class="card-icon blue">📁</div>
-<div class="card-label">Dezembro 2024</div>
-<div class="card-value">28</div>
-<div style="font-size: 0.85rem; color: #6B7280;">notas fiscais</div>
-</div>
-<div class="dashboard-card" style="cursor: pointer;">
-<div class="card-icon blue">📁</div>
-<div class="card-label">Novembro 2024</div>
-<div class="card-value">25</div>
-<div style="font-size: 0.85rem; color: #6B7280;">notas fiscais</div>
-</div>
-</div>
-<!-- Recent Notes -->
-<div class="table-card">
-<div class="table-header">
-<h3 class="chart-title">Notas Fiscais Recentes</h3>
-<div class="search-box">
-<span>🔍</span>
-<input class="search-input" placeholder="Pesquisar notas..." type="text"/>
-</div>
-</div>
-<table>
-<thead>
-<tr>
-<th>Data</th>
-<th>Número</th>
-<th>Cliente/Fornecedor</th>
-<th>Valor</th>
-<th>Tipo</th>
-<th>Ações</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>25/01/2025</td>
-<td>NF-2025-001</td>
-<td>WATT - DISTRIBUIDORA</td>
-<td>R$ 5.432,10</td>
-<td><span class="status-badge entrada">Entrada</span></td>
-<td>
-<button class="btn" style="padding: 0.5rem;">📄</button>
-<button class="btn" style="padding: 0.5rem;">⬇️</button>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<!-- Bloco de Notas Section -->
-<section class="content-section" id="bloconotas-section" style="display: none;">
-<div class="page-header">
-<div>
-<h1 class="page-title">Bloco de Notas</h1>
-<p class="page-subtitle">Anotações rápidas e lembretes</p>
-</div>
-</div>
-<div class="notes-container">
-<div class="notes-header">
-<span>📝</span>
-<span>Notas Rápidas</span>
-</div>
-<textarea class="notes-content" placeholder="Digite suas anotações aqui...">- Reunião com contador às 15h
+                </div>
+            </div>
+
+            <!-- Contact Filters -->
+            <div class="dashboard-grid" style="margin-bottom: 2rem;">
+                <button class="dashboard-card" style="cursor: pointer;">
+                    <div class="card-icon blue">👥</div>
+                    <div class="card-label">Todos</div>
+                    <div class="card-value" id="total-contatos">0</div>
+                </button>
+                <button class="dashboard-card" style="cursor: pointer;">
+                    <div class="card-icon green">👤</div>
+                    <div class="card-label">Clientes</div>
+                    <div class="card-value" id="total-clientes">0</div>
+                </button>
+                <button class="dashboard-card" style="cursor: pointer;">
+                    <div class="card-icon purple">🏢</div>
+                    <div class="card-label">Fornecedores</div>
+                    <div class="card-value" id="total-fornecedores">0</div>
+                </button>
+            </div>
+
+            <!-- Contacts Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <h3 class="chart-title">Lista de Contatos</h3>
+                    <div class="search-box">
+                        <span>🔍</span>
+                        <input type="text" class="search-input" placeholder="Pesquisar contatos...">
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Tipo</th>
+                            <th>CNPJ/CPF</th>
+                            <th>Telefone</th>
+                            <th>Email</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contatos-tbody">
+                        <tr>
+                            <td colspan="6" class="loading">Carregando contatos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Bloco de Notas Section -->
+        <section id="bloconotas-section" class="content-section" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Bloco de Notas</h1>
+                    <p class="page-subtitle">Anotações rápidas e lembretes</p>
+                </div>
+            </div>
+
+            <div class="notes-container">
+                <div class="notes-header">
+                    <span>📝</span>
+                    <span>Notas Rápidas</span>
+                </div>
+                <textarea class="notes-content" placeholder="Digite suas anotações aqui...">- Reunião com contador às 15h
 - Verificar relatório PR-MDL
 - Enviar documentos DECEA até sexta
 - Pagar fornecedor XYZ até dia 30</textarea>
-</div>
-<div class="dashboard-grid" style="margin-top: 2rem;">
-<div class="dashboard-card">
-<div class="card-icon purple">📌</div>
-<div class="card-label">Tarefas Pendentes</div>
-<ul style="margin-top: 1rem; padding-left: 1.5rem; color: #6B7280;">
-<li>Emitir NF para cliente ABC</li>
-<li>Conferir extrato bancário</li>
-<li>Atualizar planilha de custos</li>
-</ul>
-</div>
-<div class="dashboard-card">
-<div class="card-icon green">✅</div>
-<div class="card-label">Concluídas Hoje</div>
-<ul style="margin-top: 1rem; padding-left: 1.5rem; color: #6B7280;">
-<li style="text-decoration: line-through;">Pagar conta de luz</li>
-<li style="text-decoration: line-through;">Enviar relatório mensal</li>
-</ul>
-</div>
-</div>
-</section>
-</main>
-<!-- Modals -->
-<!-- Funcionário Modal -->
-<div class="modal" id="funcionario-modal">
-<div class="modal-content">
-<div class="modal-header">
-<h2 class="modal-title" id="funcionario-modal-title">Novo Funcionário</h2>
-<button class="close-btn" onclick="closeModal('funcionario')">✕</button>
-</div>
-<form id="funcionario-form">
-<input id="funcionario-id" type="hidden"/>
-<div class="form-group">
-<label class="form-label">Nome Completo *</label>
-<input class="form-input" id="funcionario-nome" required="" type="text"/>
-</div>
-<div class="form-group">
-<label class="form-label">CPF *</label>
-<input class="form-input" id="funcionario-cpf" placeholder="000.000.000-00" required="" type="text"/>
-</div>
-<div class="form-group">
-<label class="form-label">Email</label>
-<input class="form-input" id="funcionario-email" type="email"/>
-</div>
-<div class="form-group">
-<label class="form-label">Telefone</label>
-<input class="form-input" id="funcionario-telefone" placeholder="(00) 00000-0000" type="tel"/>
-</div>
-<div class="form-group">
-<label class="form-label">Cargo *</label>
-<input class="form-input" id="funcionario-cargo" required="" type="text"/>
-</div>
-<div class="form-group">
-<label class="form-label">Departamento</label>
-<select class="form-select" id="funcionario-departamento">
-<option value="">Selecione</option>
-<option value="Administrativo">Administrativo</option>
-<option value="Operacional">Operacional</option>
-<option value="Financeiro">Financeiro</option>
-<option value="RH">RH</option>
-<option value="TI">TI</option>
-<option value="Comercial">Comercial</option>
-</select>
-</div>
-<div class="form-group">
-<label class="form-label">Data de Admissão *</label>
-<input class="form-input" id="funcionario-admissao" required="" type="date"/>
-</div>
-<div class="form-group">
-<label class="form-label">Salário</label>
-<input class="form-input" id="funcionario-salario" placeholder="R$ 0,00" type="text"/>
-</div>
-<div class="form-group">
-<label class="form-label">Status</label>
-<select class="form-select" id="funcionario-status">
-<option value="ativo">Ativo</option>
-<option value="inativo">Inativo</option>
-<option value="ferias">Férias</option>
-<option value="afastado">Afastado</option>
-</select>
-</div>
-<div style="display: flex; gap: 1rem; justify-content: flex-end;">
-<button class="btn" onclick="closeModal('funcionario')" type="button">Cancelar</button>
-<button class="btn btn-primary" type="submit">Salvar</button>
-</div>
-<div>
-<label class="block mb-1">
-<input class="mr-2" id="reembolsavel" type="checkbox"/>
-            Essa despesa precisa ser reembolsada?
-        </label>
-</div>
-</form>
-</div>
-</div>
-<!-- Lançamento Modal -->
-<div class="modal" id="lancamento-modal">
-<div class="modal-content">
-<div class="modal-header">
-<h2 class="modal-title">Novo Lançamento</h2>
-<button class="close-btn" onclick="closeModal('lancamento')">✕</button>
-</div>
-<form id="lancamento-form">
-<div class="form-group">
-<label class="form-label">Tipo</label>
-<select class="form-select" id="lancamento-tipo">
-<option value="receita">Receita</option>
-<option value="despesa">Despesa</option>
-</select>
-</div>
-<div class="form-group">
-<label class="form-label">Descrição</label>
-<input class="form-input" id="lancamento-descricao" placeholder="Descrição do lançamento" required="" type="text"/>
-</div>
-<div class="form-group">
-<label class="form-label">Categoria</label>
-<select class="form-select" id="lancamento-categoria">
-<option>Selecione uma categoria</option>
-<option>Despesas Share</option>
-<option>Ressarcim. Pago</option>
-<option>Contratos</option>
-<option>Outros</option>
-</select>
-</div>
-<div class="form-group">
-<label class="form-label">Valor</label>
-<input class="form-input" id="lancamento-valor" placeholder="R$ 0,00" required="" type="text"/>
-</div>
-<div class="form-group">
-<label class="form-label">Data de Vencimento</label>
-<input class="form-input" id="lancamento-data" required="" type="date"/>
-</div>
-<div style="display: flex; gap: 1rem; justify-content: flex-end;">
-<button class="btn" onclick="closeModal('lancamento')" type="button">Cancelar</button>
-<button class="btn btn-primary" type="submit">Salvar</button>
-</div>
-</form>
-</div>
-</div>
-<!-- Contato Modal -->
-<div class="modal" id="contato-modal">
-<div class="modal-content">
-<div class="modal-header">
-<h2 class="modal-title">Novo Contato</h2>
-<button class="close-btn" onclick="closeModal('contato')">✕</button>
-</div>
-<form id="contato-form">
-<div class="form-group">
-<label class="form-label">Tipo de Contato</label>
-<select class="form-select" id="contato-tipo">
-<option value="cliente">Cliente</option>
-<option value="fornecedor">Fornecedor</option>
-</select>
-</div>
-<div class="form-group">
-<label class="form-label">Nome/Razão Social</label>
-<input class="form-input" id="contato-nome" placeholder="Nome completo ou razão social" required="" type="text"/>
-</div>
-<div class="form-group">
-<label class="form-label">CNPJ/CPF</label>
-<input class="form-input" id="contato-documento" placeholder="00.000.000/0000-00" type="text"/>
-</div>
-<div class="form-group">
-<label class="form-label">Email</label>
-<input class="form-input" id="contato-email" placeholder="email@exemplo.com" type="email"/>
-</div>
-<div class="form-group">
-<label class="form-label">Telefone</label>
-<input class="form-input" id="contato-telefone" placeholder="(00) 00000-0000" type="tel"/>
-</div>
-<div style="display: flex; gap: 1rem; justify-content: flex-end;">
-<button class="btn" onclick="closeModal('contato')" type="button">Cancelar</button>
-<button class="btn btn-primary" type="submit">Salvar</button>
-</div>
-</form>
-</div>
-</div>
-<!-- Nota Fiscal Modal -->
-<div class="modal" id="notafiscal-modal">
-<div class="modal-content">
-<div class="modal-header">
-<h2 class="modal-title">Anexar Nota Fiscal</h2>
-<button class="close-btn" onclick="closeModal('notafiscal')">✕</button>
-</div>
-<form>
-<div class="form-group">
-<label class="form-label">Número da Nota</label>
-<input class="form-input" placeholder="NF-0000" type="text"/>
-</div>
-<div class="form-group">
-<label class="form-label">Cliente/Fornecedor</label>
-<select class="form-select">
-<option>Selecione</option>
-<option>WATT - DISTRIBUIDORA</option>
-<option>GA SERVICE</option>
-</select>
-</div>
-<div class="form-group">
-<label class="form-label">Data de Emissão</label>
-<input class="form-input" type="date"/>
-</div>
-<div class="form-group">
-<label class="form-label">Valor</label>
-<input class="form-input" placeholder="R$ 0,00" type="text"/>
-</div>
-<div class="form-group">
-<label class="form-label">Arquivo</label>
-<input accept=".pdf,.xml" class="form-input" type="file"/>
-</div>
-<div style="display: flex; gap: 1rem; justify-content: flex-end;">
-<button class="btn" onclick="closeModal('notafiscal')" type="button">Cancelar</button>
-<button class="btn btn-primary" type="submit">Anexar</button>
-</div>
-</form>
-</div>
-</div>
-<script type="module">
-        console.log('=== INICIANDO SISTEMA SHARE BRASIL ===');
+            </div>
+
+            <div class="dashboard-grid" style="margin-top: 2rem;">
+                <div class="dashboard-card">
+                    <div class="card-icon purple">📌</div>
+                    <div class="card-label">Tarefas Pendentes</div>
+                    <ul style="margin-top: 1rem; padding-left: 1.5rem; color: #6B7280;">
+                        <li>Emitir NF para cliente ABC</li>
+                        <li>Conferir extrato bancário</li>
+                        <li>Atualizar planilha de custos</li>
+                    </ul>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-icon green">✅</div>
+                    <div class="card-label">Concluídas Hoje</div>
+                    <ul style="margin-top: 1rem; padding-left: 1.5rem; color: #6B7280;">
+                        <li style="text-decoration: line-through;">Pagar conta de luz</li>
+                        <li style="text-decoration: line-through;">Enviar relatório mensal</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <!-- Funcionário Modal -->
+    <div class="modal" id="funcionario-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="funcionario-modal-title">Novo Funcionário</h2>
+                <button class="close-btn" onclick="closeModal('funcionario')">✕</button>
+            </div>
+            <form id="funcionario-form">
+                <input type="hidden" id="funcionario-id">
+                <div class="form-group">
+                    <label class="form-label">Nome Completo *</label>
+                    <input type="text" class="form-input" id="funcionario-nome" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">CPF *</label>
+                    <input type="text" class="form-input" id="funcionario-cpf" placeholder="000.000.000-00" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="funcionario-email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Telefone</label>
+                    <input type="tel" class="form-input" id="funcionario-telefone" placeholder="(00) 00000-0000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cargo *</label>
+                    <input type="text" class="form-input" id="funcionario-cargo" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Departamento</label>
+                    <select class="form-select" id="funcionario-departamento">
+                        <option value="">Selecione</option>
+                        <option value="Administrativo">Administrativo</option>
+                        <option value="Operacional">Operacional</option>
+                        <option value="Financeiro">Financeiro</option>
+                        <option value="RH">RH</option>
+                        <option value="TI">TI</option>
+                        <option value="Comercial">Comercial</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Data de Admissão *</label>
+                    <input type="date" class="form-input" id="funcionario-admissao" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Salário</label>
+                    <input type="text" class="form-input" id="funcionario-salario" placeholder="R$ 0,00">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="funcionario-status">
+                        <option value="ativo">Ativo</option>
+                        <option value="inativo">Inativo</option>
+                        <option value="ferias">Férias</option>
+                        <option value="afastado">Afastado</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn" onclick="closeModal('funcionario')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lançamento Modal -->
+    <div class="modal" id="lancamento-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Novo Lançamento</h2>
+                <button class="close-btn" onclick="closeModal('lancamento')">✕</button>
+            </div>
+            <form id="lancamento-form">
+                <div class="form-group">
+                    <label class="form-label">Tipo</label>
+                    <select class="form-select" id="lancamento-tipo">
+                        <option value="receita">Receita</option>
+                        <option value="despesa">Despesa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descrição</label>
+                    <input type="text" class="form-input" id="lancamento-descricao" placeholder="Descrição do lançamento" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Categoria</label>
+                    <select class="form-select" id="lancamento-categoria">
+                        <option>Selecione uma categoria</option>
+                        <option>Despesas Share</option>
+                        <option>Ressarcim. Pago</option>
+                        <option>Contratos</option>
+                        <option>Outros</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Valor</label>
+                    <input type="text" class="form-input" id="lancamento-valor" placeholder="R$ 0,00" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Data de Vencimento</label>
+                    <input type="date" class="form-input" id="lancamento-data" required>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn" onclick="closeModal('lancamento')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contato Modal -->
+    <div class="modal" id="contato-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Novo Contato</h2>
+                <button class="close-btn" onclick="closeModal('contato')">✕</button>
+            </div>
+            <form id="contato-form">
+                <div class="form-group">
+                    <label class="form-label">Tipo de Contato</label>
+                    <select class="form-select" id="contato-tipo">
+                        <option value="cliente">Cliente</option>
+                        <option value="fornecedor">Fornecedor</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nome/Razão Social</label>
+                    <input type="text" class="form-input" id="contato-nome" placeholder="Nome completo ou razão social" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">CNPJ/CPF</label>
+                    <input type="text" class="form-input" id="contato-documento" placeholder="00.000.000/0000-00">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="contato-email" placeholder="email@exemplo.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Telefone</label>
+                    <input type="tel" class="form-input" id="contato-telefone" placeholder="(00) 00000-0000">
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn" onclick="closeModal('contato')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        console.log('=== INICIANDO SISTEMA SHARE BRASIL (SUPABASE) ===');
         
-        // Capturar erros globais
-        window.onerror = function(msg, url, lineNo, columnNo, error) {
-            console.error('Erro global capturado:', msg, error);
-            
-            // Verificar se é erro de permissão do Firebase
-            if (msg.includes('permission-denied') || (error && error.code === 'permission-denied')) {
-                console.error('❌ Erro de permissão detectado');
-                if (confirm('Sessão expirada ou sem permissão. Deseja fazer login novamente?')) {
-                    window.location.href = 'index.html'; // Mudado de login.html para index.html
+        // Database Manager Class
+        class DatabaseManager {
+            constructor(supabase) {
+                this.supabase = supabase;
+            }
+
+            async getCurrentUserId() {
+                const { data: { user } } = await this.supabase.auth.getUser();
+                return user?.id;
+            }
+
+            // Funcionários
+            async addFuncionario(data) {
+                try {
+                    const userId = await this.getCurrentUserId();
+                    const { data: result, error } = await this.supabase
+                        .from('funcionarios')
+                        .insert([{
+                            ...data,
+                            user_id: userId,
+                            created_at: new Date().toISOString()
+                        }])
+                        .select();
+                    
+                    if (error) throw error;
+                    console.log("Funcionário adicionado:", result);
+                    return result[0];
+                } catch (error) {
+                    console.error("Erro ao adicionar funcionário:", error);
+                    alert("Erro ao adicionar funcionário!");
                 }
             }
-            
-            return false;
-        };
-        
-        // Listener para quando Firebase estiver pronto
-        window.addEventListener('firebaseReady', function() {
-            console.log('🎉 Evento firebaseReady recebido!');
-            // Forçar inicialização se ainda não tiver iniciado
-            if (!window.initialized) {
-                initializeApp();
+
+            async updateFuncionario(id, data) {
+                try {
+                    const { error } = await this.supabase
+                        .from('funcionarios')
+                        .update({
+                            ...data,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    console.log("Funcionário atualizado");
+                } catch (error) {
+                    console.error("Erro ao atualizar funcionário:", error);
+                    alert("Erro ao atualizar funcionário!");
+                }
             }
-        });
-        
-        // Loading control
-        function hideLoading() {// Loading control
-function hideLoading() {
-    console.log('Escondendo loading...');
-    const loading = document.getElementById('loading-overlay');
-    if (loading) {
-        loading.style.display = 'none';
-    }
-    // Garantir que seja removido
-    setTimeout(() => {
-        const loadingCheck = document.getElementById('loading-overlay');
-        if (loadingCheck) {
-            loadingCheck.remove();
+
+            async deleteFuncionario(id) {
+                try {
+                    const { error } = await this.supabase
+                        .from('funcionarios')
+                        .delete()
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    console.log("Funcionário removido");
+                } catch (error) {
+                    console.error("Erro ao remover funcionário:", error);
+                    alert("Erro ao remover funcionário!");
+                }
+            }
+
+            // Transações
+            async addTransacao(data) {
+                try {
+                    const userId = await this.getCurrentUserId();
+                    const { data: result, error } = await this.supabase
+                        .from('transacoes')
+                        .insert([{
+                            ...data,
+                            user_id: userId,
+                            created_at: new Date().toISOString()
+                        }])
+                        .select();
+                    
+                    if (error) throw error;
+                    console.log("Transação adicionada:", result);
+                    return result[0];
+                } catch (error) {
+                    console.error("Erro ao adicionar transação:", error);
+                    alert("Erro ao adicionar transação!");
+                }
+            }
+
+            // Contatos
+            async addContato(data) {
+                try {
+                    const userId = await this.getCurrentUserId();
+                    const { data: result, error } = await this.supabase
+                        .from('contatos')
+                        .insert([{
+                            ...data,
+                            user_id: userId,
+                            created_at: new Date().toISOString()
+                        }])
+                        .select();
+                    
+                    if (error) throw error;
+                    console.log("Contato adicionado:", result);
+                    return result[0];
+                } catch (error) {
+                    console.error("Erro ao adicionar contato:", error);
+                    alert("Erro ao adicionar contato!");
+                }
+            }
         }
-    }, 100);
-}
 
-function showLoading() {
-    const loading = document.getElementById('loading-overlay');
-    if (loading) {
-        loading.style.display = 'flex';
-    }
-}
+        // Initialize App
+        let dbManager;
+        let currentUser = null;
 
-// Auto-hide loading após 5 segundos (failsafe)
-setTimeout(() => {
-    hideLoading();
-    console.log('Loading removido por timeout');
-}, 5000);
+        // Check authentication
+        async function checkAuth() {
+            if (!supabase) {
+                console.error('Supabase não está inicializado');
+                return;
+            }
+
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            if (user) {
+                currentUser = user;
+                console.log('✅ Usuário autenticado:', user.email);
+                document.getElementById('login-container').style.display = 'none';
+                document.querySelector('.user-name').textContent = user.email.split('@')[0];
+                hideLoading();
+                initializeApp();
+            } else {
+                console.log('❌ Usuário não autenticado');
+                showLogin();
+            }
+        }
+
+        // Show login
+        function showLogin() {
+            hideLoading();
+            document.getElementById('login-container').style.display = 'flex';
+        }
+
+        // Hide loading
+        function hideLoading() {
             const loading = document.getElementById('loading-overlay');
             if (loading) {
                 loading.style.display = 'none';
             }
         }
 
-        function showLoading() {
-            const loading = document.getElementById('loading-overlay');
-            if (loading) {
-                loading.style.display = 'flex';
-            }
-        }
-
-        // Initialize Firebase and app
-        let initAttempts = 0;
-        const maxAttempts = 10;
-        window.initialized = false;
-
-        function initializeApp() {
-            // Verificar se o DOM está pronto
-            if (!document.getElementById('loading-overlay')) {
-                console.error('DOM não está pronto ainda');
-                setTimeout(initializeApp, 500);
-                return;
-            }
+        // Login
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            if (window.initialized) {
-                console.log('Sistema já inicializado, ignorando...');
-                return;
-            }
-            
-            initAttempts++;
-            console.log(`Tentativa ${initAttempts} de inicialização...`);
-            
-            // Verificar se Firebase está carregado
-            if (!window.firestore || !window.db) {
-                console.log('Firebase ainda não está disponível...');
-                
-                if (initAttempts < maxAttempts) {
-                    setTimeout(initializeApp, 1000);
-                } else {
-                    console.error('Firebase não pôde ser carregado após múltiplas tentativas');
-                    hideLoading();
-                    document.body.innerHTML = `
-                        <div style="display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column;">
-                            <h2 style="color: #EF4444; margin-bottom: 1rem;">Erro ao conectar com o banco de dados</h2>
-                            <p style="color: #666; margin-bottom: 2rem;">Verifique sua conexão com a internet e recarregue a página.</p>
-                            <button onclick="location.reload()" style="padding: 0.75rem 1.5rem; background: #4A90E2; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                                Recarregar Página
-                            </button>
-                        </div>
-                    `;
-                }
-                return;
-            }
-
-            console.log('Firebase carregado com sucesso!');
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
             
             try {
-                const { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, where, getDoc } = window.firestore;
-                const db = window.db;
-
-                console.log('Firestore functions importadas com sucesso');
-
-                // Database Operations
-                class DatabaseManager {
-                    // Funcionários
-                    async addFuncionario(data) {
-                        try {
-                            const docRef = await addDoc(collection(db, "funcionarios"), {
-                                ...data,
-                                createdAt: new Date()
-                            });
-                            console.log("Funcionário adicionado com ID: ", docRef.id);
-                            return docRef.id;
-                        } catch (error) {
-                            console.error("Erro ao adicionar funcionário: ", error);
-                            alert("Erro ao adicionar funcionário!");
-                        }
-                    }
-
-                    async updateFuncionario(id, data) {
-                        try {
-                            const funcionarioRef = doc(db, "funcionarios", id);
-                            await updateDoc(funcionarioRef, {
-                                ...data,
-                                updatedAt: new Date()
-                            });
-                            console.log("Funcionário atualizado");
-                        } catch (error) {
-                            console.error("Erro ao atualizar funcionário: ", error);
-                            alert("Erro ao atualizar funcionário!");
-                        }
-                    }
-
-                    async deleteFuncionario(id) {
-                        try {
-                            await deleteDoc(doc(db, "funcionarios", id));
-                            console.log("Funcionário removido");
-                        } catch (error) {
-                            console.error("Erro ao remover funcionário: ", error);
-                            alert("Erro ao remover funcionário!");
-                        }
-                    }
-
-                    // Transações
-                    async addTransacao(data) {
-                        try {
-                            const docRef = await addDoc(collection(db, "transacoes"), {
-                                ...data,
-                                createdAt: new Date()
-                            });
-                            console.log("Transação adicionada com ID: ", docRef.id);
-                            return docRef.id;
-                        } catch (error) {
-                            console.error("Erro ao adicionar transação: ", error);
-                            alert("Erro ao adicionar transação!");
-                        }
-                    }
-
-                    // Contatos
-                    async addContato(data) {
-                        try {
-                            const docRef = await addDoc(collection(db, "contatos"), {
-                                ...data,
-                                createdAt: new Date()
-                            });
-                            console.log("Contato adicionado com ID: ", docRef.id);
-                            return docRef.id;
-                        } catch (error) {
-                            console.error("Erro ao adicionar contato: ", error);
-                            alert("Erro ao adicionar contato!");
-                        }
-                    }
-                }
-
-                const dbManager = new DatabaseManager();
-                window.dbManager = dbManager;
-
-                // Real-time listeners
-                function setupRealtimeListeners() {
-                    // Funcionários listener
-                    const funcionariosQuery = query(collection(db, "funcionarios"), orderBy("nome"));
-                    onSnapshot(funcionariosQuery, (snapshot) => {
-                        const funcionarios = [];
-                        let totalSalario = 0;
-                        let ativos = 0;
-                        let inativos = 0;
-
-                        snapshot.forEach((doc) => {
-                            const data = { id: doc.id, ...doc.data() };
-                            funcionarios.push(data);
-                            
-                            if (data.status === 'ativo') {
-                                ativos++;
-                                totalSalario += parseFloat(data.salario || 0);
-                            } else {
-                                inativos++;
-                            }
-                        });
-
-                        // Update stats
-                        document.getElementById('total-funcionarios').textContent = funcionarios.length;
-                        document.getElementById('funcionarios-ativos').textContent = ativos;
-                        document.getElementById('funcionarios-inativos').textContent = inativos;
-                        document.getElementById('folha-pagamento').textContent = formatCurrency(totalSalario);
-
-                        // Update table
-                        updateFuncionariosTable(funcionarios);
-                    });
-
-                    // Transações listener
-                    const transacoesQuery = query(collection(db, "transacoes"), orderBy("data", "desc"));
-                    onSnapshot(transacoesQuery, (snapshot) => {
-                        const transacoes = [];
-                        let totalEntradas = 0;
-                        let totalSaidas = 0;
-
-                        snapshot.forEach((doc) => {
-                            const data = { id: doc.id, ...doc.data() };
-                            transacoes.push(data);
-                            
-                            if (data.tipo === 'receita') {
-                                totalEntradas += parseFloat(data.valor || 0);
-                            } else {
-                                totalSaidas += parseFloat(data.valor || 0);
-                            }
-                        });
-
-                        // Update dashboard
-                        document.getElementById('total-entradas').textContent = formatCurrency(totalEntradas);
-                        document.getElementById('total-saidas').textContent = formatCurrency(totalSaidas);
-                        document.getElementById('resultado-mes').textContent = formatCurrency(totalEntradas - totalSaidas);
-
-                        // Update table
-                        updateTransacoesTable(transacoes);
-                    });
-
-                    // Contatos listener
-                    const contatosQuery = query(collection(db, "contatos"), orderBy("nome"));
-                    onSnapshot(contatosQuery, (snapshot) => {
-                        const contatos = [];
-                        let clientes = 0;
-                        let fornecedores = 0;
-
-                        snapshot.forEach((doc) => {
-                            const data = { id: doc.id, ...doc.data() };
-                            contatos.push(data);
-                            
-                            if (data.tipo === 'cliente') {
-                                clientes++;
-                            } else {
-                                fornecedores++;
-                            }
-                        });
-
-                        // Update stats
-                        document.getElementById('total-contatos').textContent = contatos.length;
-                        document.getElementById('total-clientes').textContent = clientes;
-                        document.getElementById('total-fornecedores').textContent = fornecedores;
-
-                        // Update table
-                        updateContatosTable(contatos);
-                    });
-                }
-
-                // Update Tables Functions
-                function updateFuncionariosTable(funcionarios) {
-                    const tbody = document.getElementById('funcionarios-tbody');
-                    
-                    if (funcionarios.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Nenhum funcionário cadastrado</td></tr>';
-                        return;
-                    }
-
-                    tbody.innerHTML = funcionarios.map(f => `
-                        <tr>
-                            <td>${f.nome || ''}</td>
-                            <td>${f.cpf || ''}</td>
-                            <td>${f.cargo || ''}</td>
-                            <td>${f.departamento || ''}</td>
-                            <td>${f.admissao ? new Date(f.admissao).toLocaleDateString('pt-BR') : ''}</td>
-                            <td>${formatCurrency(f.salario || 0)}</td>
-                            <td><span class="status-badge ${f.status}">${f.status || 'ativo'}</span></td>
-                            <td class="action-buttons">
-                                <button class="btn btn-small" onclick="editFuncionario('${f.id}')">✏️</button>
-                                <button class="btn btn-small btn-danger" onclick="deleteFuncionario('${f.id}')">🗑️</button>
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-
-                function updateTransacoesTable(transacoes) {
-                    const tbody = document.getElementById('transacoes-tbody');
-                    
-                    if (transacoes.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Nenhuma transação registrada</td></tr>';
-                        return;
-                    }
-
-                    tbody.innerHTML = transacoes.slice(0, 10).map(t => `
-                        <tr>
-                            <td>${t.data ? new Date(t.data).toLocaleDateString('pt-BR') : ''}</td>
-                            <td>${t.descricao || ''}</td>
-                            <td>${t.categoria || ''}</td>
-                            <td><span class="status-badge ${t.tipo === 'receita' ? 'entrada' : 'saida'}">${t.tipo === 'receita' ? 'Entrada' : 'Saída'}</span></td>
-                            <td>${formatCurrency(t.valor || 0)}</td>
-                            <td>${t.status === 'pago' ? '✅ Pago' : '⏳ Pendente'}</td>
-                        </tr>
-                    `).join('');
-                }
-
-                function updateContatosTable(contatos) {
-                    const tbody = document.getElementById('contatos-tbody');
-                    
-                    if (contatos.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Nenhum contato cadastrado</td></tr>';
-                        return;
-                    }
-
-                    tbody.innerHTML = contatos.map(c => `
-                        <tr>
-                            <td>${c.nome || ''}</td>
-                            <td><span class="status-badge ${c.tipo === 'cliente' ? 'entrada' : 'saida'}">${c.tipo === 'cliente' ? 'Cliente' : 'Fornecedor'}</span></td>
-                            <td>${c.documento || ''}</td>
-                            <td>${c.telefone || ''}</td>
-                            <td>${c.email || ''}</td>
-                            <td class="action-buttons">
-                                <button class="btn btn-small">✏️</button>
-                                <button class="btn btn-small btn-danger">🗑️</button>
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-
-                // Initialize listeners
-                setupRealtimeListeners();
-
-                // Dados iniciais dos clientes
-                const clientesIniciais = [
-                    {
-                        tipo: 'cliente',
-                        nome: 'AGRITEX COMERCIAL AGRICOLA LTDA',
-                        documento: '06.098.802/0001-62',
-                        email: 'financeiro.pagar@agritex.com.br',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'AGRICULTURA E PECUARIA CAMPONOVENSE LTDA',
-                        documento: '39.429.668/0001-94',
-                        email: 'financeiro@agrocam.com.br',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'ARGO INTELIGENCIA DIGITAL LTDA',
-                        documento: '39.752.281/0001-74',
-                        email: 'FINANCEIRO@ARGOINTELIGENCIA.COM.BR',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'CARISMA INVESTIMENTOS E PARTICIPACOES S/A',
-                        documento: '07.701.775/0001-33',
-                        email: 'CARISMAPVA@GMAIL.COM',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'CARVALIMA TRANSPORTES LTDA',
-                        documento: '35.070.814/0001-51',
-                        email: 'VALDECIR@CARVALIMA.COM.BR',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'COMPLEXO TURISTICO SANTA ROSA PANTANAL HOTEIS LTDA',
-                        documento: '03.785.623/0001-05',
-                        email: 'FINANCEIRO@SANTAROSAPANTANAL.COM.BR',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'DUILIO NAVES JUNQUEIRA JUNIOR',
-                        documento: '343.588.541-68',
-                        email: 'duilio@odomprimeculaba.com.br',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'E. R. DE FIGUEIREDO & CIA LTDA',
-                        documento: '30.541.222/0001-82',
-                        email: 'elsonramos@live.com',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'ESTANCIA BAHIA EVENTOS LTDA',
-                        documento: '26.373.673/0001-80',
-                        email: 'CONTABILIDADE@ESTANCIABAHIA.COM.BR',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'EUGENIO ROBERTO BERGAMIM',
-                        documento: '041.476.781-06',
-                        email: '',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'GA SERVICE - GESTAO ADMINISTRATIVA LTDA',
-                        documento: '10.942.203/0001-50',
-                        email: 'NOTIFICACOES@GRUPOALDO.COM.BR',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'GRF INCORPORADORA E CONSTRUTORA LTDA',
-                        documento: '32.187.187/0001-70',
-                        email: 'FISCAL@EXATUSONLINE.COM.BR',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'NOGUEIRA PARTICIPACOES E EMPREENDIMENTOS LTDA',
-                        documento: '12.645.475/0001-14',
-                        email: 'ADRIANO@NOGUEIRACONTABIL.COM',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'NOVA ALIANCA AGRO LTDA',
-                        documento: '28.080.165/0001-30',
-                        email: 'EDSON@NOVAALIANCAAGRO.COM.BR',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'R.O.G HOLDING LTDA',
-                        documento: '40.988.927/0001-04',
-                        email: 'RAPHAELCOALASOCIAL@GMAIL.COM',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'RICARDO GOMES DOS SANTOS',
-                        documento: '784.754.651-53',
-                        email: 'ricardo@tunnaseguros.com.br',
-                        telefone: '65992517629'
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'SOLUCAO TECNICA COMERCIO E SERVICOS DE EQUIPAMENTOS ELETRONICOS LTDA',
-                        documento: '04.164.120/0001-85',
-                        email: 'ADMINISTRATIVO@SOLUCAOTECNICA.COM.BR',
-                        telefone: ''
-                    },
-                    {
-                        tipo: 'cliente',
-                        nome: 'WATT - DISTRIBUIDORA BRASIL. DE COMBUSTIVEIS E DERIVADOS DE PETROLEO LTDA',
-                        documento: '03.908.643/0001-26',
-                        email: 'GERENTECOMERCIAL@WATTBRAS.COM.BR',
-                        telefone: ''
-                    }
-                ];
-
-                // Função para popular clientes iniciais (executar apenas uma vez)
-                async function popularClientesIniciais() {
-                    try {
-                        // Teste de conexão
-                        console.log('Testando conexão com Firestore...');
-                        
-                        // Verificar se já existem clientes
-                        const clientesSnapshot = await getDocs(collection(db, "contatos"));
-                        
-                        console.log('Conexão com Firestore OK. Clientes existentes:', clientesSnapshot.size);
-                        
-                        if (clientesSnapshot.empty) {
-                            console.log('Populando clientes iniciais...');
-                            
-                            for (const cliente of clientesIniciais) {
-                                await addDoc(collection(db, "contatos"), {
-                                    ...cliente,
-                                    createdAt: new Date()
-                                });
-                            }
-                            
-                            console.log('Clientes iniciais adicionados com sucesso!');
-                        }
-                    } catch (error) {
-                        console.error('Erro ao conectar com Firestore:', error);
-                        
-                        if (error.code === 'permission-denied') {
-                            console.error('❌ ERRO DE PERMISSÃO NO FIRESTORE');
-                            console.log('Possíveis soluções:');
-                            console.log('1. Faça login primeiro em login.html');
-                            console.log('2. Ou atualize as regras do Firestore');
-                            console.log('Acesse: https://console.firebase.google.com/project/financeiro-share/firestore/rules');
-                            
-                            if (confirm('Erro de permissão no banco de dados. Deseja ir para a tela de login?')) {
-                                window.location.href = 'index.html'; // Mudado de login.html para index.html
-                            }
-                        } else {
-                            alert('Erro ao conectar com o banco de dados: ' + error.message);
-                        }
-                    }
-                }
-
-                // Popular clientes iniciais se necessário
-                // Comentado para evitar inserção automática
-                // popularClientesIniciais();
-
-                // Global functions for buttons
-                window.editFuncionario = async (id) => {
-                    const funcionarioRef = doc(db, "funcionarios", id);
-                    const funcionarioSnap = await getDoc(funcionarioRef);
-                    
-                    if (funcionarioSnap.exists()) {
-                        const data = funcionarioSnap.data();
-                        
-                        // Fill form
-                        document.getElementById('funcionario-id').value = id;
-                        document.getElementById('funcionario-nome').value = data.nome || '';
-                        document.getElementById('funcionario-cpf').value = data.cpf || '';
-                        document.getElementById('funcionario-email').value = data.email || '';
-                        document.getElementById('funcionario-telefone').value = data.telefone || '';
-                        document.getElementById('funcionario-cargo').value = data.cargo || '';
-                        document.getElementById('funcionario-departamento').value = data.departamento || '';
-                        document.getElementById('funcionario-admissao').value = data.admissao || '';
-                        document.getElementById('funcionario-salario').value = formatCurrency(data.salario || 0);
-                        document.getElementById('funcionario-status').value = data.status || 'ativo';
-                        
-                        document.getElementById('funcionario-modal-title').textContent = 'Editar Funcionário';
-                        openModal('funcionario');
-                    }
-                };
-
-                window.deleteFuncionario = async (id) => {
-                    if (confirm('Tem certeza que deseja remover este funcionário?')) {
-                        await dbManager.deleteFuncionario(id);
-                    }
-                };
-
-                // Função para popular clientes manualmente
-                window.popularClientes = async () => {
-                    if (confirm('Deseja importar os 18 clientes iniciais? Isso não duplicará clientes existentes.')) {
-                        showLoading();
-                        try {
-                            for (const cliente of clientesIniciais) {
-                                // Verificar se cliente já existe pelo CNPJ
-                                const q = query(collection(db, "contatos"), where("documento", "==", cliente.documento));
-                                const querySnapshot = await getDocs(q);
-                                
-                                if (querySnapshot.empty) {
-                                    await addDoc(collection(db, "contatos"), {
-                                        ...cliente,
-                                        createdAt: new Date()
-                                    });
-                                    console.log(`Cliente ${cliente.nome} adicionado`);
-                                } else {
-                                    console.log(`Cliente ${cliente.nome} já existe`);
-                                }
-                            }
-                            alert('Importação concluída!');
-                        } catch (error) {
-                            console.error('Erro na importação:', error);
-                            alert('Erro ao importar clientes');
-                        } finally {
-                            hideLoading();
-                        }
-                    }
-                };
-
-                // Função de debug do Firebase
-                window.testFirebase = async () => {
-                    console.log('=== TESTE DE CONEXÃO FIREBASE ===');
-                    console.log('window.db:', window.db);
-                    console.log('window.firestore:', window.firestore);
-                    
-                    try {
-                        console.log('Tentando acessar coleção de contatos...');
-                        const snapshot = await getDocs(collection(db, "contatos"));
-                        console.log('Sucesso! Total de contatos:', snapshot.size);
-                        
-                        snapshot.forEach(doc => {
-                            console.log('Contato:', doc.id, doc.data());
-                        });
-                        
-                        alert(`Conexão OK! ${snapshot.size} contatos encontrados.`);
-                    } catch (error) {
-                        console.error('Erro ao acessar Firestore:', error);
-                        alert('Erro: ' + error.message);
-                    }
-                };
-
-                // Hide loading when everything is ready
-                hideLoading();
-                window.initialized = true;
-                console.log('%c✅ SISTEMA CARREGADO COM SUCESSO!', 'color: #10B981; font-size: 16px; font-weight: bold;');
-                console.log('Para importar os 18 clientes iniciais, clique em "Importar Clientes" na seção Contatos');
-            
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+                
+                if (error) throw error;
+                
+                console.log('Login bem-sucedido!');
+                checkAuth();
             } catch (error) {
-                console.error('Erro crítico ao inicializar o sistema:', error);
-                hideLoading();
-                alert('Erro ao inicializar o sistema: ' + error.message);
+                console.error('Erro no login:', error);
+                alert('Erro ao fazer login: ' + error.message);
+            }
+        });
+
+        // Logout
+        async function logout() {
+            if (confirm('Deseja realmente sair do sistema?')) {
+                try {
+                    const { error } = await supabase.auth.signOut();
+                    if (error) throw error;
+                    
+                    window.location.reload();
+                } catch (error) {
+                    console.error('Erro ao fazer logout:', error);
+                    alert('Erro ao sair. Tente novamente.');
+                }
             }
         }
 
-        // Start initialization after a small delay
-        console.log('Aguardando 1 segundo antes de inicializar...');
-        setTimeout(initializeApp, 1000);
-        
-        // Botão de inicialização manual para debug
-        window.manualInit = function() {
-            console.log('Inicialização manual acionada');
-            initializeApp();
-        };
-        
-        // Adicionar botão de debug no console
-        console.log('Se o sistema não carregar, execute: manualInit()');
-        
-        console.log('=== FIM DO SCRIPT PRINCIPAL ===');
-        
-        // Resumo de diagnóstico após 5 segundos
-        setTimeout(() => {
-            console.log('%c=== RESUMO DE DIAGNÓSTICO ===', 'color: #FF6B6B; font-size: 14px; font-weight: bold;');
-            console.log('Firebase carregado:', window.db ? '✅' : '❌');
-            console.log('Firestore disponível:', window.firestore ? '✅' : '❌');
-            console.log('Sistema inicializado:', window.initialized ? '✅' : '❌');
+        // Initialize application
+        async function initializeApp() {
+            console.log('Inicializando aplicação...');
             
-            if (!window.db || !window.firestore) {
-                console.log('%c⚠️ AÇÃO NECESSÁRIA:', 'color: #FF6B6B; font-weight: bold;');
-                console.log('1. Verifique as regras do Firestore');
-                console.log('2. Execute: manualInit()');
-                console.log('3. Ou recarregue a página (F5)');
-            } else {
-                console.log('%c✅ Tudo funcionando corretamente!', 'color: #10B981; font-weight: bold;');
-                console.log('Dica: Use o botão "Debug Firebase" no menu para testar a conexão');
-            }
-        }, 5000);
-    </script>
-<!-- Script de diagnóstico -->
-<script>
-        console.log('Script de diagnóstico carregado');
-        
-        // Teste de conectividade
-        fetch('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js')
-            .then(response => {
-                console.log('✅ CDN do Firebase acessível:', response.status);
-            })
-            .catch(error => {
-                console.error('❌ Erro ao acessar CDN do Firebase:', error);
-            });
-        
-        // Verificar estado do Firebase a cada 2 segundos
-        let checkCount = 0;
-        const checkFirebase = setInterval(() => {
-            checkCount++;
-            console.log(`Verificação ${checkCount}: window.db =`, window.db ? 'OK' : 'NÃO CARREGADO');
-            console.log(`Verificação ${checkCount}: window.firestore =`, window.firestore ? 'OK' : 'NÃO CARREGADO');
+            dbManager = new DatabaseManager(supabase);
+            window.dbManager = dbManager;
             
-            if (window.db && window.firestore) {
-                console.log('✅ Firebase está pronto!');
-                clearInterval(checkFirebase);
+            // Setup realtime subscriptions
+            setupRealtimeSubscriptions();
+            
+            // Load initial data
+            await loadDashboardData();
+        }
+
+        // Setup realtime subscriptions
+        function setupRealtimeSubscriptions() {
+            // Funcionários subscription
+            supabase
+                .channel('funcionarios-changes')
+                .on('postgres_changes', 
+                    { event: '*', schema: 'public', table: 'funcionarios' }, 
+                    handleFuncionariosChange
+                )
+                .subscribe();
+
+            // Transações subscription
+            supabase
+                .channel('transacoes-changes')
+                .on('postgres_changes', 
+                    { event: '*', schema: 'public', table: 'transacoes' }, 
+                    handleTransacoesChange
+                )
+                .subscribe();
+
+            // Contatos subscription
+            supabase
+                .channel('contatos-changes')
+                .on('postgres_changes', 
+                    { event: '*', schema: 'public', table: 'contatos' }, 
+                    handleContatosChange
+                )
+                .subscribe();
+        }
+
+        // Handle changes
+        async function handleFuncionariosChange(payload) {
+            console.log('Mudança em funcionários:', payload);
+            await loadFuncionarios();
+        }
+
+        async function handleTransacoesChange(payload) {
+            console.log('Mudança em transações:', payload);
+            await loadTransacoes();
+        }
+
+        async function handleContatosChange(payload) {
+            console.log('Mudança em contatos:', payload);
+            await loadContatos();
+        }
+
+        // Load data functions
+        async function loadDashboardData() {
+            await Promise.all([
+                loadFuncionarios(),
+                loadTransacoes(),
+                loadContatos()
+            ]);
+        }
+
+        async function loadFuncionarios() {
+            try {
+                const { data: funcionarios, error } = await supabase
+                    .from('funcionarios')
+                    .select('*')
+                    .order('nome');
                 
-                // Tentar inicializar automaticamente
-                if (!window.initialized && window.manualInit) {
-                    console.log('Iniciando sistema automaticamente...');
-                    window.manualInit();
+                if (error) throw error;
+                
+                let totalSalario = 0;
+                let ativos = 0;
+                let inativos = 0;
+
+                funcionarios.forEach(f => {
+                    if (f.status === 'ativo') {
+                        ativos++;
+                        totalSalario += parseFloat(f.salario || 0);
+                    } else {
+                        inativos++;
+                    }
+                });
+
+                // Update stats
+                document.getElementById('total-funcionarios').textContent = funcionarios.length;
+                document.getElementById('funcionarios-ativos').textContent = ativos;
+                document.getElementById('funcionarios-inativos').textContent = inativos;
+                document.getElementById('folha-pagamento').textContent = formatCurrency(totalSalario);
+
+                // Update table
+                updateFuncionariosTable(funcionarios);
+            } catch (error) {
+                console.error('Erro ao carregar funcionários:', error);
+            }
+        }
+
+        async function loadTransacoes() {
+            try {
+                const { data: transacoes, error } = await supabase
+                    .from('transacoes')
+                    .select('*')
+                    .order('data', { ascending: false });
+                
+                if (error) throw error;
+                
+                let totalEntradas = 0;
+                let totalSaidas = 0;
+
+                transacoes.forEach(t => {
+                    if (t.tipo === 'receita') {
+                        totalEntradas += parseFloat(t.valor || 0);
+                    } else {
+                        totalSaidas += parseFloat(t.valor || 0);
+                    }
+                });
+
+                // Update dashboard
+                document.getElementById('total-entradas').textContent = formatCurrency(totalEntradas);
+                document.getElementById('total-saidas').textContent = formatCurrency(totalSaidas);
+                document.getElementById('resultado-mes').textContent = formatCurrency(totalEntradas - totalSaidas);
+
+                // Update table
+                updateTransacoesTable(transacoes);
+            } catch (error) {
+                console.error('Erro ao carregar transações:', error);
+            }
+        }
+
+        async function loadContatos() {
+            try {
+                const { data: contatos, error } = await supabase
+                    .from('contatos')
+                    .select('*')
+                    .order('nome');
+                
+                if (error) throw error;
+                
+                let clientes = 0;
+                let fornecedores = 0;
+
+                contatos.forEach(c => {
+                    if (c.tipo === 'cliente') {
+                        clientes++;
+                    } else {
+                        fornecedores++;
+                    }
+                });
+
+                // Update stats
+                document.getElementById('total-contatos').textContent = contatos.length;
+                document.getElementById('total-clientes').textContent = clientes;
+                document.getElementById('total-fornecedores').textContent = fornecedores;
+
+                // Update table
+                updateContatosTable(contatos);
+            } catch (error) {
+                console.error('Erro ao carregar contatos:', error);
+            }
+        }
+
+        // Update Tables Functions
+        function updateFuncionariosTable(funcionarios) {
+            const tbody = document.getElementById('funcionarios-tbody');
+            
+            if (funcionarios.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Nenhum funcionário cadastrado</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = funcionarios.map(f => `
+                <tr>
+                    <td>${f.nome || ''}</td>
+                    <td>${f.cpf || ''}</td>
+                    <td>${f.cargo || ''}</td>
+                    <td>${f.departamento || ''}</td>
+                    <td>${f.admissao ? new Date(f.admissao).toLocaleDateString('pt-BR') : ''}</td>
+                    <td>${formatCurrency(f.salario || 0)}</td>
+                    <td><span class="status-badge ${f.status}">${f.status || 'ativo'}</span></td>
+                    <td class="action-buttons">
+                        <button class="btn btn-small" onclick="editFuncionario('${f.id}')">✏️</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteFuncionario('${f.id}')">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateTransacoesTable(transacoes) {
+            const tbody = document.getElementById('transacoes-tbody');
+            
+            if (transacoes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Nenhuma transação registrada</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = transacoes.slice(0, 10).map(t => `
+                <tr>
+                    <td>${t.data ? new Date(t.data).toLocaleDateString('pt-BR') : ''}</td>
+                    <td>${t.descricao || ''}</td>
+                    <td>${t.categoria || ''}</td>
+                    <td><span class="status-badge ${t.tipo === 'receita' ? 'entrada' : 'saida'}">${t.tipo === 'receita' ? 'Entrada' : 'Saída'}</span></td>
+                    <td>${formatCurrency(t.valor || 0)}</td>
+                    <td>${t.status === 'pago' ? '✅ Pago' : '⏳ Pendente'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateContatosTable(contatos) {
+            const tbody = document.getElementById('contatos-tbody');
+            
+            if (contatos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Nenhum contato cadastrado</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = contatos.map(c => `
+                <tr>
+                    <td>${c.nome || ''}</td>
+                    <td><span class="status-badge ${c.tipo === 'cliente' ? 'entrada' : 'saida'}">${c.tipo === 'cliente' ? 'Cliente' : 'Fornecedor'}</span></td>
+                    <td>${c.documento || ''}</td>
+                    <td>${c.telefone || ''}</td>
+                    <td>${c.email || ''}</td>
+                    <td class="action-buttons">
+                        <button class="btn btn-small">✏️</button>
+                        <button class="btn btn-small btn-danger">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Utility Functions
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value);
+        }
+
+        // Show/Hide Sections
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Remove active class from all menu items
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected section
+            const section = document.getElementById(sectionName + '-section');
+            if (section) {
+                section.style.display = 'block';
+            }
+            
+            // Add active class to clicked menu item
+            event.currentTarget.classList.add('active');
+        }
+
+        // Modal Functions
+        function openModal(modalType) {
+            document.getElementById(modalType + '-modal').classList.add('active');
+        }
+
+        function closeModal(modalType) {
+            document.getElementById(modalType + '-modal').classList.remove('active');
+            
+            // Clear form if it's funcionário modal
+            if (modalType === 'funcionario') {
+                document.getElementById('funcionario-form').reset();
+                document.getElementById('funcionario-id').value = '';
+                document.getElementById('funcionario-modal-title').textContent = 'Novo Funcionário';
+            }
+        }
+
+        // Close modal when clicking outside
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                }
+            });
+        });
+
+        // Forms
+        document.getElementById('funcionario-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const id = document.getElementById('funcionario-id').value;
+            const data = {
+                nome: document.getElementById('funcionario-nome').value,
+                cpf: document.getElementById('funcionario-cpf').value,
+                email: document.getElementById('funcionario-email').value,
+                telefone: document.getElementById('funcionario-telefone').value,
+                cargo: document.getElementById('funcionario-cargo').value,
+                departamento: document.getElementById('funcionario-departamento').value,
+                admissao: document.getElementById('funcionario-admissao').value,
+                salario: document.getElementById('funcionario-salario').value.replace(/[^\d,]/g, '').replace(',', '.'),
+                status: document.getElementById('funcionario-status').value
+            };
+
+            if (id) {
+                await dbManager.updateFuncionario(id, data);
+            } else {
+                await dbManager.addFuncionario(data);
+            }
+            
+            closeModal('funcionario');
+            e.target.reset();
+        });
+
+        document.getElementById('lancamento-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                tipo: document.getElementById('lancamento-tipo').value,
+                descricao: document.getElementById('lancamento-descricao').value,
+                categoria: document.getElementById('lancamento-categoria').value,
+                valor: document.getElementById('lancamento-valor').value.replace(/[^\d,]/g, '').replace(',', '.'),
+                data: document.getElementById('lancamento-data').value,
+                status: 'pendente'
+            };
+
+            await dbManager.addTransacao(data);
+            
+            closeModal('lancamento');
+            e.target.reset();
+        });
+
+        document.getElementById('contato-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                tipo: document.getElementById('contato-tipo').value,
+                nome: document.getElementById('contato-nome').value,
+                documento: document.getElementById('contato-documento').value,
+                email: document.getElementById('contato-email').value,
+                telefone: document.getElementById('contato-telefone').value
+            };
+
+            await dbManager.addContato(data);
+            
+            closeModal('contato');
+            e.target.reset();
+        });
+
+        // Format currency inputs
+        document.querySelectorAll('input[placeholder*="R$"]').forEach(input => {
+            input.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                value = (value / 100).toFixed(2);
+                value = value.replace('.', ',');
+                e.target.value = 'R$ ' + value;
+            });
+        });
+
+        // Save notes
+        document.querySelector('.notes-content').addEventListener('blur', function() {
+            localStorage.setItem('quickNotes', this.value);
+        });
+
+        // Load saved notes
+        window.addEventListener('load', function() {
+            const savedNotes = localStorage.getItem('quickNotes');
+            if (savedNotes) {
+                document.querySelector('.notes-content').value = savedNotes;
+            }
+        });
+
+        // Test Supabase connection
+        async function testSupabase() {
+            console.log('=== TESTE DE CONEXÃO SUPABASE ===');
+            
+            try {
+                const { data, error } = await supabase
+                    .from('contatos')
+                    .select('count', { count: 'exact' });
+                
+                if (error) throw error;
+                
+                console.log('Conexão OK!');
+                alert('Conexão com Supabase OK!');
+            } catch (error) {
+                console.error('Erro ao conectar:', error);
+                alert('Erro: ' + error.message);
+            }
+        }
+
+        // Popular clientes iniciais
+        async function popularClientes() {
+            const clientesIniciais = [
+                {
+                    tipo: 'cliente',
+                    nome: 'AGRITEX COMERCIAL AGRICOLA LTDA',
+                    documento: '06.098.802/0001-62',
+                    email: 'financeiro.pagar@agritex.com.br',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'AGRICULTURA E PECUARIA CAMPONOVENSE LTDA',
+                    documento: '39.429.668/0001-94',
+                    email: 'financeiro@agrocam.com.br',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'ARGO INTELIGENCIA DIGITAL LTDA',
+                    documento: '39.752.281/0001-74',
+                    email: 'FINANCEIRO@ARGOINTELIGENCIA.COM.BR',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'CARISMA INVESTIMENTOS E PARTICIPACOES S/A',
+                    documento: '07.701.775/0001-33',
+                    email: 'CARISMAPVA@GMAIL.COM',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'CARVALIMA TRANSPORTES LTDA',
+                    documento: '35.070.814/0001-51',
+                    email: 'VALDECIR@CARVALIMA.COM.BR',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'COMPLEXO TURISTICO SANTA ROSA PANTANAL HOTEIS LTDA',
+                    documento: '03.785.623/0001-05',
+                    email: 'FINANCEIRO@SANTAROSAPANTANAL.COM.BR',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'DUILIO NAVES JUNQUEIRA JUNIOR',
+                    documento: '343.588.541-68',
+                    email: 'duilio@odomprimeculaba.com.br',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'E. R. DE FIGUEIREDO & CIA LTDA',
+                    documento: '30.541.222/0001-82',
+                    email: 'elsonramos@live.com',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'ESTANCIA BAHIA EVENTOS LTDA',
+                    documento: '26.373.673/0001-80',
+                    email: 'CONTABILIDADE@ESTANCIABAHIA.COM.BR',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'EUGENIO ROBERTO BERGAMIM',
+                    documento: '041.476.781-06',
+                    email: '',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'GA SERVICE - GESTAO ADMINISTRATIVA LTDA',
+                    documento: '10.942.203/0001-50',
+                    email: 'NOTIFICACOES@GRUPOALDO.COM.BR',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'GRF INCORPORADORA E CONSTRUTORA LTDA',
+                    documento: '32.187.187/0001-70',
+                    email: 'FISCAL@EXATUSONLINE.COM.BR',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'NOGUEIRA PARTICIPACOES E EMPREENDIMENTOS LTDA',
+                    documento: '12.645.475/0001-14',
+                    email: 'ADRIANO@NOGUEIRACONTABIL.COM',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'NOVA ALIANCA AGRO LTDA',
+                    documento: '28.080.165/0001-30',
+                    email: 'EDSON@NOVAALIANCAAGRO.COM.BR',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'R.O.G HOLDING LTDA',
+                    documento: '40.988.927/0001-04',
+                    email: 'RAPHAELCOALASOCIAL@GMAIL.COM',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'RICARDO GOMES DOS SANTOS',
+                    documento: '784.754.651-53',
+                    email: 'ricardo@tunnaseguros.com.br',
+                    telefone: '65992517629'
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'SOLUCAO TECNICA COMERCIO E SERVICOS DE EQUIPAMENTOS ELETRONICOS LTDA',
+                    documento: '04.164.120/0001-85',
+                    email: 'ADMINISTRATIVO@SOLUCAOTECNICA.COM.BR',
+                    telefone: ''
+                },
+                {
+                    tipo: 'cliente',
+                    nome: 'WATT - DISTRIBUIDORA BRASIL. DE COMBUSTIVEIS E DERIVADOS DE PETROLEO LTDA',
+                    documento: '03.908.643/0001-26',
+                    email: 'GERENTECOMERCIAL@WATTBRAS.COM.BR',
+                    telefone: ''
+                }
+            ];
+
+            if (confirm('Deseja importar os 18 clientes iniciais? Isso não duplicará clientes existentes.')) {
+                try {
+                    for (const cliente of clientesIniciais) {
+                        // Verificar se cliente já existe pelo CNPJ
+                        const { data: existing } = await supabase
+                            .from('contatos')
+                            .select('id')
+                            .eq('documento', cliente.documento)
+                            .single();
+                        
+                        if (!existing) {
+                            await dbManager.addContato(cliente);
+                            console.log(`Cliente ${cliente.nome} adicionado`);
+                        } else {
+                            console.log(`Cliente ${cliente.nome} já existe`);
+                        }
+                    }
+                    alert('Importação concluída!');
+                } catch (error) {
+                    console.error('Erro na importação:', error);
+                    alert('Erro ao importar clientes');
                 }
             }
+        }
+
+        // Make functions globally available
+        window.showSection = showSection;
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.formatCurrency = formatCurrency;
+        window.logout = logout;
+        window.popularClientes = popularClientes;
+        window.editFuncionario = async (id) => {
+            const { data: funcionario, error } = await supabase
+                .from('funcionarios')
+                .select('*')
+                .eq('id', id)
+                .single();
             
-            if (checkCount > 10) {
-                console.error('❌ Firebase não carregou após 20 segundos');
-                clearInterval(checkFirebase);
+            if (!error && funcionario) {
+                // Fill form
+                document.getElementById('funcionario-id').value = id;
+                document.getElementById('funcionario-nome').value = funcionario.nome || '';
+                document.getElementById('funcionario-cpf').value = funcionario.cpf || '';
+                document.getElementById('funcionario-email').value = funcionario.email || '';
+                document.getElementById('funcionario-telefone').value = funcionario.telefone || '';
+                document.getElementById('funcionario-cargo').value = funcionario.cargo || '';
+                document.getElementById('funcionario-departamento').value = funcionario.departamento || '';
+                document.getElementById('funcionario-admissao').value = funcionario.admissao || '';
+                document.getElementById('funcionario-salario').value = formatCurrency(funcionario.salario || 0);
+                document.getElementById('funcionario-status').value = funcionario.status || 'ativo';
                 
-                // Mostrar instruções de debug
-                console.log('=== INSTRUÇÕES DE DEBUG ===');
-                console.log('1. Verifique o console para erros');
-                console.log('2. Verifique se há bloqueio de scripts');
-                console.log('3. Execute manualInit() no console');
-                console.log('4. Verifique as regras do Firestore no Firebase Console');
-                console.log('5. Certifique-se de que as regras permitem leitura/escrita');
-                console.log('');
-                console.log('Regras sugeridas para teste (NÃO usar em produção):');
-                console.log('⚠️ ATENÇÃO: Estas regras são APENAS para teste!');
-                console.log('rules_version = "2";');
-                console.log('service cloud.firestore {');
-                console.log('  match /databases/{database}/documents {');
-                console.log('    match /{document=**} {');
-                console.log('      allow read, write: if true;');
-                console.log('    }');
-                console.log('  }');
-                console.log('}');
-                console.log('');
-                console.log('📍 Para acessar o Firebase Console:');
-                console.log('https://console.firebase.google.com/project/financeiro-share/firestore/rules');
+                document.getElementById('funcionario-modal-title').textContent = 'Editar Funcionário';
+                openModal('funcionario');
             }
-        }, 2000);
+        };
+        window.deleteFuncionario = async (id) => {
+            if (confirm('Tem certeza que deseja remover este funcionário?')) {
+                await dbManager.deleteFuncionario(id);
+            }
+        };
+        window.testSupabase = testSupabase;
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            if (supabase) {
+                checkAuth();
+            } else {
+                console.error('Supabase não foi inicializado corretamente');
+                alert('Erro ao inicializar o sistema. Verifique a configuração do Supabase.');
+            }
+        });
+
+        // Funções adicionais para as novas seções
+        
+        // Inadimplência
+        async function carregarInadimplencia() {
+            try {
+                const hoje = new Date();
+                const semanaFutura = new Date(hoje.getTime() + 7 * 24 * 60 * 60 * 1000);
+                
+                const { data: transacoes, error } = await supabase
+                    .from('transacoes')
+                    .select('*')
+                    .eq('tipo', 'receita')
+                    .eq('status', 'pendente')
+                    .order('data', { ascending: true });
+                
+                if (error) throw error;
+                
+                let totalAtraso = 0;
+                let venceHoje = 0;
+                let venceSemana = 0;
+                const inadimplentes = [];
+                
+                transacoes.forEach(t => {
+                    const vencimento = new Date(t.data);
+                    const diasAtraso = Math.floor((hoje - vencimento) / (1000 * 60 * 60 * 24));
+                    
+                    if (diasAtraso > 0) {
+                        totalAtraso += parseFloat(t.valor || 0);
+                        inadimplentes.push({ ...t, diasAtraso });
+                    } else if (diasAtraso === 0) {
+                        venceHoje += parseFloat(t.valor || 0);
+                    } else if (vencimento <= semanaFutura) {
+                        venceSemana += parseFloat(t.valor || 0);
+                    }
+                });
+                
+                // Atualizar cards
+                document.getElementById('total-atraso').textContent = formatCurrency(totalAtraso);
+                document.getElementById('vence-hoje').textContent = formatCurrency(venceHoje);
+                document.getElementById('vence-semana').textContent = formatCurrency(venceSemana);
+                
+                // Calcular taxa de inadimplência
+                const { data: todasReceitas } = await supabase
+                    .from('transacoes')
+                    .select('valor')
+                    .eq('tipo', 'receita');
+                
+                const totalReceitas = todasReceitas?.reduce((sum, t) => sum + parseFloat(t.valor || 0), 0) || 0;
+                const taxaInadimplencia = totalReceitas > 0 ? (totalAtraso / totalReceitas * 100).toFixed(2) : 0;
+                document.getElementById('taxa-inadimplencia').textContent = taxaInadimplencia + '%';
+                
+                // Atualizar tabela
+                updateInadimplenciaTable(inadimplentes);
+                
+            } catch (error) {
+                console.error('Erro ao carregar inadimplência:', error);
+            }
+        }
+        
+        function updateInadimplenciaTable(inadimplentes) {
+            const tbody = document.getElementById('inadimplencia-tbody');
+            
+            if (inadimplentes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Nenhum pagamento em atraso</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = inadimplentes.map(t => `
+                <tr>
+                    <td>${new Date(t.data).toLocaleDateString('pt-BR')}</td>
+                    <td>${t.contato_nome || '-'}</td>
+                    <td>${t.descricao || ''}</td>
+                    <td>${formatCurrency(t.valor || 0)}</td>
+                    <td><span class="status-badge saida">${t.diasAtraso} dias</span></td>
+                    <td>
+                        <button class="btn btn-small" onclick="marcarComoPago('${t.id}')">✅ Receber</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        async function marcarComoPago(id) {
+            if (confirm('Marcar como pago?')) {
+                try {
+                    const { error } = await supabase
+                        .from('transacoes')
+                        .update({ status: 'pago' })
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    
+                    carregarInadimplencia();
+                    loadTransacoes(); // Atualizar dashboard
+                } catch (error) {
+                    console.error('Erro ao atualizar:', error);
+                    alert('Erro ao marcar como pago');
+                }
+            }
+        }
+        
+        // Exportação de dados
+        async function exportarDados(tipo) {
+            try {
+                let data;
+                
+                switch(tipo) {
+                    case 'funcionarios':
+                        const { data: funcionarios } = await supabase
+                            .from('funcionarios')
+                            .select('*')
+                            .order('nome');
+                        data = funcionarios;
+                        break;
+                        
+                    case 'transacoes':
+                        const { data: transacoes } = await supabase
+                            .from('transacoes')
+                            .select('*')
+                            .order('data', { ascending: false });
+                        data = transacoes;
+                        break;
+                        
+                    case 'contatos':
+                        const { data: contatos } = await supabase
+                            .from('contatos')
+                            .select('*')
+                            .order('nome');
+                        data = contatos;
+                        break;
+                }
+                
+                if (data) {
+                    downloadCSV(data, tipo);
+                }
+                
+            } catch (error) {
+                console.error('Erro ao exportar:', error);
+                alert('Erro ao exportar dados');
+            }
+        }
+        
+        function downloadCSV(data, filename) {
+            let csv = '';
+            
+            // Headers
+            if (data.length > 0) {
+                const headers = Object.keys(data[0]).filter(key => !['id', 'user_id', 'created_at', 'updated_at'].includes(key));
+                csv += headers.join(',') + '\n';
+                
+                // Data
+                data.forEach(row => {
+                    csv += headers.map(header => {
+                        const value = row[header] || '';
+                        return `"${value.toString().replace(/"/g, '""')}"`;
+                    }).join(',') + '\n';
+                });
+            }
+            
+            // Download
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+        
+        // Backup
+        async function fazerBackup() {
+            try {
+                const backup = {
+                    timestamp: new Date().toISOString(),
+                    funcionarios: [],
+                    transacoes: [],
+                    contatos: [],
+                    notas: []
+                };
+                
+                // Coletar todos os dados
+                const { data: funcionarios } = await supabase.from('funcionarios').select('*');
+                const { data: transacoes } = await supabase.from('transacoes').select('*');
+                const { data: contatos } = await supabase.from('contatos').select('*');
+                
+                backup.funcionarios = funcionarios || [];
+                backup.transacoes = transacoes || [];
+                backup.contatos = contatos || [];
+                
+                // Salvar no localStorage
+                localStorage.setItem('sharebrasil_backup', JSON.stringify(backup));
+                localStorage.setItem('sharebrasil_ultimo_backup', backup.timestamp);
+                
+                document.getElementById('ultimo-backup').textContent = new Date(backup.timestamp).toLocaleString('pt-BR');
+                alert('Backup realizado com sucesso!');
+                
+            } catch (error) {
+                console.error('Erro ao fazer backup:', error);
+                alert('Erro ao fazer backup');
+            }
+        }
+        
+        function exportarBackup() {
+            const backup = localStorage.getItem('sharebrasil_backup');
+            if (!backup) {
+                alert('Nenhum backup encontrado. Faça um backup primeiro.');
+                return;
+            }
+            
+            const blob = new Blob([backup], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `backup_sharebrasil_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+        
+        async function restaurarBackup(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const backup = JSON.parse(e.target.result);
+                    
+                    if (!confirm('⚠️ ATENÇÃO: Isso irá sobrescrever todos os dados atuais. Deseja continuar?')) {
+                        return;
+                    }
+                    
+                    // Restaurar dados (implementar com cuidado em produção)
+                    alert('Função de restauração em desenvolvimento. Por segurança, faça isso manualmente via Supabase.');
+                    
+                } catch (error) {
+                    console.error('Erro ao restaurar:', error);
+                    alert('Arquivo de backup inválido');
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        // Configurações
+        function salvarConfiguracoes() {
+            const empresa = document.getElementById('config-empresa').value;
+            const cnpj = document.getElementById('config-cnpj').value;
+            
+            localStorage.setItem('config_empresa', empresa);
+            localStorage.setItem('config_cnpj', cnpj);
+            
+            alert('Configurações salvas!');
+        }
+        
+        function salvarCategorias() {
+            const categorias = document.getElementById('config-categorias').value;
+            localStorage.setItem('config_categorias', categorias);
+            alert('Categorias salvas!');
+        }
+        
+        function alterarSenha() {
+            alert('Use o Supabase Dashboard para alterar a senha do usuário.');
+        }
+        
+        // Carregar configurações salvas
+        window.addEventListener('load', () => {
+            const empresa = localStorage.getItem('config_empresa');
+            const cnpj = localStorage.getItem('config_cnpj');
+            const ultimoBackup = localStorage.getItem('sharebrasil_ultimo_backup');
+            
+            if (empresa) document.getElementById('config-empresa').value = empresa;
+            if (cnpj) document.getElementById('config-cnpj').value = cnpj;
+            if (ultimoBackup) document.getElementById('ultimo-backup').textContent = new Date(ultimoBackup).toLocaleString('pt-BR');
+        });
+        
+        // Adicionar listeners para as novas seções
+        window.showSection = function(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Remove active class from all menu items
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected section
+            const section = document.getElementById(sectionName + '-section');
+            if (section) {
+                section.style.display = 'block';
+            }
+            
+            // Add active class to clicked menu item
+            event.currentTarget.classList.add('active');
+            
+            // Carregar dados específicos da seção
+            if (sectionName === 'inadimplencia') {
+                carregarInadimplencia();
+            } else if (sectionName === 'configuracoes' && currentUser) {
+                document.getElementById('config-email').value = currentUser.email;
+            }
+        };
+        
+        // Funções de relatório
+        function gerarRelatorioInadimplencia() {
+            window.print();
+        }
+        
+        function gerarDRE() {
+            alert('Função de geração de DRE em desenvolvimento');
+        }
+        
+        function imprimirRelatorio() {
+            window.print();
+        }
     </script>
-<script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-const supabase = createClient("https://nxtxlueqzujqnsuqxmry.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54dHhsdWVxenVqcW5zdXF4bXJ5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MDg3ODg2NywiZXhwIjoyMDY2NDU0ODY3fQ.apS_VXJQJDdUdRVVny0k8RsFEL5IOYyZ-tsOfVcKvJU");
-
-document.getElementById("funcionario-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const nome = document.getElementById("funcionario-nome").value;
-  const cargo = document.getElementById("funcionario-cargo").value;
-  const reembolsavel = document.getElementById("reembolsavel").checked;
-
-  const { data: despesa, error } = await supabase
-    .from("despesas")
-    .insert([{ descricao: nome, valor: 0, tipo: 'saida', reembolsavel, pago: false }])
-    .select()
-    .single();
-
-  if (error) {
-    alert("Erro ao salvar.");
-    return;
-  }
-
-  if (reembolsavel) {
-    await supabase.from("contas_receber").insert([{
-      data: new Date().toISOString().split('T')[0],
-      descricao: `Reembolso - ${nome}`,
-      valor: 0,
-      status: "pendente",
-      referencia_id: despesa.id
-    }]);
-  }
-
-  alert("Salvo com sucesso!");
-  e.target.reset();
-});
-</script>
-
-
-<script type="module">
-async function carregarContatos() {
-    const tbody = document.getElementById('contatos-tbody');
-    tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-gray-500 text-center">Carregando...</td></tr>';
-
-    const { data, error } = await supabase.from('contatos').select('*').order('nome');
-    if (error) {
-        tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-red-500 text-center">Erro ao carregar contatos</td></tr>';
-        return;
-    }
-
-    if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-gray-500 text-center">Nenhum contato encontrado</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = '';
-    data.forEach(contato => {
-        const tr = document.createElement('tr');
-        tr.className = 'border-b';
-        tr.innerHTML = `
-            <td class="p-3">{contato.nome}</td>
-            <td class="p-3">{contato.tipo}</td>
-            <td class="p-3">{contato.email}</td>
-            <td class="p-3">
-                <button onclick="excluirContato('{contato.id}')" class="text-red-500">🗑️</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-async function excluirContato(id) {
-    if (!confirm("Deseja remover este contato?")) return;
-    const { error } = await supabase.from('contatos').delete().eq('id', id);
-    if (error) {
-        alert("Erro ao excluir");
-        return;
-    }
-    carregarContatos();
-}
-
-carregarContatos();
-
-document.getElementById("contato-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const nome = document.getElementById("contato-nome").value;
-  const tipo = document.getElementById("contato-tipo").value;
-  const email = document.getElementById("contato-email").value;
-
-  const { error } = await supabase.from("contatos").insert([{
-    nome,
-    tipo,
-    email
-  }]);
-
-  if (error) {
-    alert("Erro ao salvar contato.");
-    return;
-  }
-
-  alert("Contato salvo com sucesso!");
-  e.target.reset();
-  closeModal('contato');
-  carregarContatos();
-});
-</script>
 </body>
 </html>
