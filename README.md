@@ -1,0 +1,5 @@
+# NÃO COMMITAR ESTE ARQUIVO!
+# Use apenas como referência para as variáveis
+
+SUPABASE_URL=https://nxtxlueqzujqnsuqxmry.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54dHhsdWVxenVqcW5zdXF4bXJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4Nzg4NjcsImV4cCI6MjA2NjQ1NDg2N30.Mq3vDWbk9bFhrOaK5MTOHZNNoh0w-878dH5ybOAp7m4
