@@ -1,0 +1,159 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Share Brasil - Dashboard Gestor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #F5F6FA; }
+    .sidebar { width: 250px; background: #1E3A5F; color: white; }
+    .main-content { margin-left: 250px; }
+    .menu-item.active { background: #2C5282; border-left: 4px solid #4A90E2; }
+    .page-title { color: #1E3A5F; }
+    .btn-primary { background: #4A90E2; color: white; }
+    .btn-primary:hover { background: #357ABD; }
+    .btn-danger { background: #EF4444; color: white; }
+    .btn-danger:hover { background: #DC2626; }
+    .modal { display: none; }
+    .modal.active { display: flex; }
+    .loading-overlay { display: flex; }
+    .loading-spinner { border-top-color: #4A90E2; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .loading-spinner { animation: spin 1s linear infinite; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body class="flex min-h-screen">
+
+<div id="loading-overlay" class="loading-overlay fixed inset-0 bg-white bg-opacity-90 z-50 flex-col items-center justify-center">
+  <div class="loading-spinner w-12 h-12 border-4 border-gray-200 rounded-full"></div>
+  <p class="mt-4 text-gray-600">Carregando sistema...</p>
+</div>
+
+<aside class="sidebar fixed top-0 left-0 h-full p-4 flex flex-col">
+  <div class="sidebar-header pb-8 mb-4 border-b border-white/10">
+    <h2 class="text-2xl font-bold">Share Brasil</h2>
+  </div>
+  <nav class="sidebar-menu flex-grow">
+    <a href="#" class="menu-item p-4 rounded-lg flex items-center gap-4 active" onclick="showSection('dashboard')">📊 Dashboard</a>
+    <a href="#" class="menu-item p-4 rounded-lg flex items-center gap-4" onclick="showSection('funcionarios')">👨‍💼 Funcionários</a>
+  </nav>
+</aside>
+
+<main class="main-content flex-1 p-8">
+  <section id="dashboard-section" class="content-section">
+    <div class="page-header bg-white p-6 rounded-lg shadow-sm mb-8 flex justify-between items-center">
+      <div>
+        <h1 class="page-title text-2xl font-bold">Resumo Executivo</h1>
+        <p class="text-gray-500">Visão geral das finanças.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="funcionarios-section" class="content-section hidden">
+    <div class="page-header bg-white p-6 rounded-lg shadow-sm mb-8 flex justify-between items-center">
+      <h1 class="page-title text-2xl font-bold">Gestão de Funcionários</h1>
+      <button class="btn-primary p-3 rounded-lg" onclick="openModal('funcionario')">➕ Novo Funcionário</button>
+    </div>
+    <div class="table-card bg-white p-6 rounded-lg shadow-sm">
+      <table class="w-full text-left">
+        <thead><tr class="border-b"><th class="p-3">Nome</th><th class="p-3">Cargo</th><th class="p-3">Ações</th></tr></thead>
+        <tbody id="funcionarios-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<div id="funcionario-modal" class="modal fixed inset-0 bg-black/50 z-50 items-center justify-center hidden">
+  <div class="modal-content bg-white p-8 rounded-lg shadow-xl w-full max-w-lg">
+    <div class="modal-header flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">Novo Funcionário</h2><button onclick="closeModal('funcionario')" class="text-2xl">&times;</button></div>
+    <form id="funcionario-form" class="space-y-4">
+      <div><label class="block mb-1">Nome Completo</label><input type="text" id="funcionario-nome" required class="w-full p-2 border rounded"></div>
+      <div><label class="block mb-1">Cargo</label><input type="text" id="funcionario-cargo" required class="w-full p-2 border rounded"></div>
+      <div class="flex justify-end gap-4 pt-4"><button type="button" class="bg-gray-200 p-3 rounded" onclick="closeModal('funcionario')">Cancelar</button><button type="submit" class="btn-primary p-3 rounded">Salvar</button></div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const supabaseUrl = "https://nxtxlueqzujqnsuqxmry.supabase.co";
+const supabaseKey = "SUA_CHAVE_PUBLICA";
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await carregarFuncionarios();
+  document.getElementById('loading-overlay').style.display = 'none';
+});
+
+document.getElementById('funcionario-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const nome = document.getElementById('funcionario-nome').value;
+  const cargo = document.getElementById('funcionario-cargo').value;
+
+  const { error } = await supabase.from('funcionarios').insert([{ nome, cargo }]);
+
+  if (error) {
+    alert("Erro ao salvar funcionário.");
+    console.error(error);
+  } else {
+    closeModal('funcionario');
+    await carregarFuncionarios();
+  }
+});
+
+async function carregarFuncionarios() {
+  const { data, error } = await supabase.from('funcionarios').select('*').order('nome');
+  const tbody = document.getElementById('funcionarios-tbody');
+  tbody.innerHTML = '';
+
+  if (error || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center p-8 text-gray-500">Nenhum funcionário cadastrado.</td></tr>';
+    return;
+  }
+
+  data.forEach(func => {
+    const tr = document.createElement('tr');
+    tr.className = 'border-b';
+    tr.innerHTML = \`
+      <td class="p-3">\${func.nome}</td>
+      <td class="p-3">\${func.cargo}</td>
+      <td class="p-3 flex gap-2">
+        <button onclick="deleteFuncionario(\${func.id})" class="text-red-500">🗑️</button>
+      </td>
+    \`;
+    tbody.appendChild(tr);
+  });
+}
+
+window.deleteFuncionario = async (id) => {
+  if (confirm("Tem certeza que deseja remover este funcionário?")) {
+    const { error } = await supabase.from('funcionarios').delete().eq('id', id);
+    if (error) {
+      alert("Erro ao excluir funcionário.");
+    } else {
+      await carregarFuncionarios();
+    }
+  }
+};
+
+window.showSection = (sectionName) => {
+  document.querySelectorAll('.content-section').forEach(sec => sec.classList.add('hidden'));
+  document.getElementById(\`\${sectionName}-section\`).classList.remove('hidden');
+  document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+  document.querySelector(\`[onclick="showSection('\${sectionName}')"]\`).classList.add('active');
+};
+window.openModal = (modalName) => document.getElementById(\`\${modalName}-modal\`).classList.add('active');
+window.closeModal = (modalName) => {
+  const modal = document.getElementById(\`\${modalName}-modal\`);
+  modal.classList.remove('active');
+  modal.querySelector('form')?.reset();
+};
+</script>
+
+</body>
+</html>
