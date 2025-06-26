@@ -1,192 +1,500 @@
-<!-- Contatos Section -->
-                <div x-show="activeSection === 'contatos'" class="p-8">
-                    <div class="mb-8">
-                        <h1 class="text-3xl font-bold text-gray-800">Gestão de Contatos</h1>
-                        <p class="text-gray-600 mt-2">Clientes e fornecedores</p>
-                    </div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão Financeira</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <template x-for="cliente in topClientes">
-                            <div class="bg-white rounded-xl p-6 card-shadow">
-                                <div class="flex items-center justify-between mb-4">
-                                    <div class="bg-purple-100 p-3 rounded-lg">
-                                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                        </svg>
-                                    </div>
-                                    <span class="text-sm font-medium text-green-600">Ativo</span>
-                                </div>
-                                <h3 class="font-semibold text-gray-800" x-text="cliente.nome"></h3>
-                                <p class="text-sm text-gray-500 mt-1" x-text="cliente.cnpj"></p>
-                                <div class="mt-4 pt-4 border-t border-gray-100">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-sm text-gray-500">Faturamento</span>
-                                        <span class="font-semibold text-green-600" x-text="formatCurrency(cliente.faturamento)"></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: #2563eb;
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .card h3 {
+            margin-bottom: 10px;
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .card .value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .receitas { color: #10b981; }
+        .despesas { color: #ef4444; }
+        .saldo { color: #2563eb; }
+
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            margin-bottom: 20px;
+            color: #2563eb;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+
+        form {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: grid;
+            gap: 5px;
+        }
+
+        label {
+            font-weight: 500;
+            color: #666;
+        }
+
+        input, select {
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        button {
+            background-color: #2563eb;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #666;
+        }
+
+        tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .btn-excluir {
+            background-color: #ef4444;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-excluir:hover {
+            background-color: #dc2626;
+        }
+
+        .filtros {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filtros select, .filtros input {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            form {
+                gap: 10px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>💰 Gestão Financeira</h1>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Dashboard -->
+        <div class="dashboard">
+            <div class="card">
+                <h3>Total de Receitas</h3>
+                <div class="value receitas" id="totalReceitas">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h3>Total de Despesas</h3>
+                <div class="value despesas" id="totalDespesas">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h3>Saldo Atual</h3>
+                <div class="value saldo" id="saldoAtual">R$ 0,00</div>
+            </div>
+        </div>
+
+        <!-- Formulário de Transação -->
+        <div class="section">
+            <h2>Nova Transação</h2>
+            <form id="formTransacao">
+                <div class="form-group">
+                    <label for="descricao">Descrição</label>
+                    <input type="text" id="descricao" required placeholder="Ex: Salário, Aluguel, Compras...">
                 </div>
-
-                <!-- Funcionários Section -->
-                <div x-show="activeSection === 'funcionarios'" class="p-8">
-                    <div class="mb-8">
-                        <h1 class="text-3xl font-bold text-gray-800">Gestão de Funcionários</h1>
-                        <p class="text-gray-600 mt-2">Equipe e colaboradores</p>
-                    </div>
-
-                    <div class="bg-white rounded-xl card-shadow overflow-hidden">
-                        <div class="p-6 border-b border-gray-200">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-lg font-semibold text-gray-800">Quadro de Funcionários</h3>
-                                <span class="text-sm text-gray-500">Total: 10 colaboradores</span>
-                            </div>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Departamento</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admissão</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Rodrigo de Moraes Toscano</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Piloto</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Operações</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">15/08/2022</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Ativo</span>
-                                        </td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Luiz Roberto</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Piloto</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Operações</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">03/01/2023</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Ativo</span>
-                                        </td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Diego Rino Bombassaro</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Piloto</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Operações</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">20/06/2023</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Ativo</span>
-                                        </td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Karoline Jardim</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Assistente Administrativo</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Administrativo</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">15/01/2025</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Ativo</span>
-                                        </td>
-                                    </tr>
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Elizangela de Oliveira</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Auxiliar de Limpeza</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Serviços Gerais</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">01/03/2024</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Ativo</span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                
+                <div class="form-group">
+                    <label for="valor">Valor</label>
+                    <input type="number" id="valor" step="0.01" required placeholder="0,00">
                 </div>
-
-                <!-- Relatórios Section -->
-                <div x-show="activeSection === 'relatorios'" class="p-8">
-                    <div class="mb-8">
-                        <h1 class="text-3xl font-bold text-gray-800">Relatórios Gerenciais</h1>
-                        <p class="text-gray-600 mt-2">Análises e demonstrativos</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div class="bg-white rounded-xl p-6 card-shadow hover:shadow-lg transition-shadow cursor-pointer">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="bg-green-100 p-3 rounded-lg">
-                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <h3 class="font-semibold text-gray-800">DRE - Demonstrativo de Resultados</h3>
-                            <p class="text-sm text-gray-500 mt-2">Análise completa de receitas e despesas</p>
-                            <button class="mt-4 text-purple-600 hover:text-purple-700 font-medium text-sm">
-                                Gerar relatório →
-                            </button>
-                        </div>
-
-                        <div class="bg-white rounded-xl p-6 card-shadow hover:shadow-lg transition-shadow cursor-pointer">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="bg-blue-100 p-3 rounded-lg">
-                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <h3 class="font-semibold text-gray-800">Fluxo de Caixa</h3>
-                            <p class="text-sm text-gray-500 mt-2">Movimentação financeira detalhada</p>
-                            <button class="mt-4 text-purple-600 hover:text-purple-700 font-medium text-sm">
-                                Gerar relatório →
-                            </button>
-                        </div>
-
-                        <div class="bg-white rounded-xl p-6 card-shadow hover:shadow-lg transition-shadow cursor-pointer">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="bg-purple-100 p-3 rounded-lg">
-                                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <h3 class="font-semibold text-gray-800">Relatório Mensal</h3>
-                            <p class="text-sm text-gray-500 mt-2">Resumo executivo do mês</p>
-                            <button class="mt-4 text-purple-600 hover:text-purple-700 font-medium text-sm">
-                                Gerar relatório →
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="mt-8 bg-white rounded-xl card-shadow overflow-hidden">
-                        <div class="p-6 border-b border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-800">Indicadores de Performance</h3>
-                        </div>
-                        <div class="p-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <div>
-                                    <p class="text-sm text-gray-500 mb-1">Margem de Lucro</p>
-                                    <p class="text-2xl font-bold text-green-600">50.9%</p>
-                                    <p class="text-xs text-gray-500 mt-1">↑ 8.3% vs mês anterior</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-500 mb-1">ROI</p>
-                                    <p class="text-2xl font-bold text-blue-600">127%</p>
-                                    <p class="text-xs text-gray-500 mt-1">↑ 15.2% vs mês anterior</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-500 mb-1">Ticket Médio</p>
-                                    <p class="text-2xl font-bold text-purple-600">R$ 8.450</p>
-                                    <p class="text-xs text-gray-500 mt-1">↑ 5.7% vs mês anterior</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-500 mb-1">Taxa de Crescimento</p>
-                                    <p class="text-2xl font-bold text-indigo-600">18.7%</p>
-                                    <p class="text-xs text-gray-500 mt-1">Meta: 20% ao ano</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                
+                <div class="form-group">
+                    <label for="tipo">Tipo</label>
+                    <select id="tipo" required>
+                        <option value="">Selecione o tipo</option>
+                        <option value="receita">Receita</option>
+                        <option value="despesa">Despesa</option>
+                    </select>
                 </div>
+                
+                <div class="form-group">
+                    <label for="categoria">Categoria</label>
+                    <select id="categoria" required>
+                        <option value="">Selecione a categoria</option>
+                        <optgroup label="Receitas">
+                            <option value="salario">Salário</option>
+                            <option value="freelance">Freelance</option>
+                            <option value="investimentos">Investimentos</option>
+                            <option value="outros-receita">Outros</option>
+                        </optgroup>
+                        <optgroup label="Despesas">
+                            <option value="alimentacao">Alimentação</option>
+                            <option value="transporte">Transporte</option>
+                            <option value="moradia">Moradia</option>
+                            <option value="saude">Saúde</option>
+                            <option value="educacao">Educação</option>
+                            <option value="lazer">Lazer</option>
+                            <option value="outros-despesa">Outros</option>
+                        </optgroup>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="data">Data</label>
+                    <input type="date" id="data" required>
+                </div>
+                
+                <button type="submit">Adicionar Transação</button>
+            </form>
+        </div>
+
+        <!-- Lista de Transações -->
+        <div class="section">
+            <h2>Histórico de Transações</h2>
+            
+            <div class="filtros">
+                <select id="filtroTipo">
+                    <option value="">Todos os tipos</option>
+                    <option value="receita">Apenas Receitas</option>
+                    <option value="despesa">Apenas Despesas</option>
+                </select>
+                
+                <select id="filtroCategoria">
+                    <option value="">Todas as categorias</option>
+                    <optgroup label="Receitas">
+                        <option value="salario">Salário</option>
+                        <option value="freelance">Freelance</option>
+                        <option value="investimentos">Investimentos</option>
+                        <option value="outros-receita">Outros</option>
+                    </optgroup>
+                    <optgroup label="Despesas">
+                        <option value="alimentacao">Alimentação</option>
+                        <option value="transporte">Transporte</option>
+                        <option value="moradia">Moradia</option>
+                        <option value="saude">Saúde</option>
+                        <option value="educacao">Educação</option>
+                        <option value="lazer">Lazer</option>
+                        <option value="outros-despesa">Outros</option>
+                    </optgroup>
+                </select>
+                
+                <input type="month" id="filtroMes">
+            </div>
+            
+            <table id="tabelaTransacoes">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Descrição</th>
+                        <th>Categoria</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="listaTransacoes">
+                    <!-- Transações serão adicionadas aqui -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Estado da aplicação
+        let transacoes = JSON.parse(localStorage.getItem('transacoes')) || [];
+
+        // Elementos do DOM
+        const formTransacao = document.getElementById('formTransacao');
+        const listaTransacoes = document.getElementById('listaTransacoes');
+        const totalReceitas = document.getElementById('totalReceitas');
+        const totalDespesas = document.getElementById('totalDespesas');
+        const saldoAtual = document.getElementById('saldoAtual');
+        const filtroTipo = document.getElementById('filtroTipo');
+        const filtroCategoria = document.getElementById('filtroCategoria');
+        const filtroMes = document.getElementById('filtroMes');
+
+        // Definir data atual no campo de data
+        document.getElementById('data').valueAsDate = new Date();
+
+        // Função para salvar no localStorage
+        function salvarTransacoes() {
+            localStorage.setItem('transacoes', JSON.stringify(transacoes));
+        }
+
+        // Função para formatar moeda
+        function formatarMoeda(valor) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(valor);
+        }
+
+        // Função para capitalizar texto
+        function capitalizar(texto) {
+            return texto.charAt(0).toUpperCase() + texto.slice(1);
+        }
+
+        // Função para adicionar transação
+        function adicionarTransacao(e) {
+            e.preventDefault();
+
+            const descricao = document.getElementById('descricao').value;
+            const valor = parseFloat(document.getElementById('valor').value);
+            const tipo = document.getElementById('tipo').value;
+            const categoria = document.getElementById('categoria').value;
+            const data = document.getElementById('data').value;
+
+            const novaTransacao = {
+                id: Date.now(),
+                descricao,
+                valor,
+                tipo,
+                categoria,
+                data
+            };
+
+            transacoes.push(novaTransacao);
+            salvarTransacoes();
+            renderizarTransacoes();
+            atualizarDashboard();
+            formTransacao.reset();
+            document.getElementById('data').valueAsDate = new Date();
+        }
+
+        // Função para excluir transação
+        function excluirTransacao(id) {
+            if (confirm('Tem certeza que deseja excluir esta transação?')) {
+                transacoes = transacoes.filter(t => t.id !== id);
+                salvarTransacoes();
+                renderizarTransacoes();
+                atualizarDashboard();
+            }
+        }
+
+        // Função para filtrar transações
+        function filtrarTransacoes() {
+            const tipo = filtroTipo.value;
+            const categoria = filtroCategoria.value;
+            const mes = filtroMes.value;
+
+            return transacoes.filter(transacao => {
+                const tipoMatch = !tipo || transacao.tipo === tipo;
+                const categoriaMatch = !categoria || transacao.categoria === categoria;
+                const mesMatch = !mes || transacao.data.startsWith(mes);
+                return tipoMatch && categoriaMatch && mesMatch;
+            });
+        }
+
+        // Função para renderizar transações
+        function renderizarTransacoes() {
+            const transacoesFiltradas = filtrarTransacoes();
+            
+            // Ordenar por data (mais recente primeiro)
+            transacoesFiltradas.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+            listaTransacoes.innerHTML = transacoesFiltradas.map(transacao => `
+                <tr>
+                    <td>${new Date(transacao.data).toLocaleDateString('pt-BR')}</td>
+                    <td>${transacao.descricao}</td>
+                    <td>${capitalizar(transacao.categoria.replace('-', ' '))}</td>
+                    <td class="${transacao.tipo === 'receita' ? 'receitas' : 'despesas'}">
+                        ${capitalizar(transacao.tipo)}
+                    </td>
+                    <td class="${transacao.tipo === 'receita' ? 'receitas' : 'despesas'}">
+                        ${formatarMoeda(transacao.valor)}
+                    </td>
+                    <td>
+                        <button class="btn-excluir" onclick="excluirTransacao(${transacao.id})">
+                            Excluir
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            if (transacoesFiltradas.length === 0) {
+                listaTransacoes.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                            Nenhuma transação encontrada
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Função para atualizar dashboard
+        function atualizarDashboard() {
+            const transacoesFiltradas = filtrarTransacoes();
+            
+            const receitas = transacoesFiltradas
+                .filter(t => t.tipo === 'receita')
+                .reduce((acc, t) => acc + t.valor, 0);
+
+            const despesas = transacoesFiltradas
+                .filter(t => t.tipo === 'despesa')
+                .reduce((acc, t) => acc + t.valor, 0);
+
+            const saldo = receitas - despesas;
+
+            totalReceitas.textContent = formatarMoeda(receitas);
+            totalDespesas.textContent = formatarMoeda(despesas);
+            saldoAtual.textContent = formatarMoeda(saldo);
+        }
+
+        // Event listeners
+        formTransacao.addEventListener('submit', adicionarTransacao);
+        filtroTipo.addEventListener('change', () => {
+            renderizarTransacoes();
+            atualizarDashboard();
+        });
+        filtroCategoria.addEventListener('change', () => {
+            renderizarTransacoes();
+            atualizarDashboard();
+        });
+        filtroMes.addEventListener('change', () => {
+            renderizarTransacoes();
+            atualizarDashboard();
+        });
+
+        // Inicializar aplicação
+        renderizarTransacoes();
+        atualizarDashboard();
+    </script>
+</body>
+</html>
