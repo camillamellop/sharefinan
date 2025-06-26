@@ -1,0 +1,12 @@
+{
+  "name": "gestao-financeira",
+  "version": "1.0.0",
+  "description": "Sistema de Gestão Financeira Pessoal",
+  "main": "index.html",
+  "scripts": {
+    "start": "echo 'This is a static HTML project'"
+  },
+  "keywords": ["gestao", "financeira", "pessoal"],
+  "author": "Seu Nome",
+  "license": "MIT"
+}
